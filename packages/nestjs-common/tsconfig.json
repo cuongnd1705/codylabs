@@ -1,5 +1,5 @@
 {
-  "extends": "@codylabs/typescript-config/base.json",
+  "extends": "@codylabs/typescript-configs/base.json",
   "compilerOptions": {
     "baseUrl": "src",
     "outDir": "dist"

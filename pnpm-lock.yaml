@@ -59,23 +59,23 @@ importers:
 
   packages/case-converter:
     devDependencies:
-      '@codylabs/typescript-config':
+      '@codylabs/typescript-configs':
         specifier: workspace:*
-        version: link:../typescript-config
+        version: link:../typescript-configs
       typescript:
         specifier: ^5.6.3
         version: 5.6.3
 
   packages/nestjs-common:
     devDependencies:
-      '@codylabs/typescript-config':
+      '@codylabs/typescript-configs':
         specifier: workspace:*
-        version: link:../typescript-config
+        version: link:../typescript-configs
       typescript:
         specifier: ^5.6.3
         version: 5.6.3
 
-  packages/typescript-config: {}
+  packages/typescript-configs: {}
 
 packages:
 

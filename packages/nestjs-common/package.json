@@ -13,7 +13,7 @@
     "clean": "rm -rf .turbo node_modules dist"
   },
   "devDependencies": {
-    "@codylabs/typescript-config": "workspace:*",
+    "@codylabs/typescript-configs": "workspace:*",
     "typescript": "^5.6.3"
   },
   "publishConfig": {
