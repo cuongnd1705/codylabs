@@ -4,20 +4,7 @@
   "compilerOptions": {
     "module": "CommonJS",
     "moduleResolution": "Node",
-
-    "declaration": true,
-    "emitDecoratorMetadata": true,
-    "experimentalDecorators": true,
-    "allowSyntheticDefaultImports": true,
-    "sourceMap": true,
-    "incremental": true,
-    "skipLibCheck": true,
-
-    "noImplicitAny": true,
     "strictBindCallApply": true,
-    "strictNullChecks": true,
-    "noFallthroughCasesInSwitch": true
-  },
-  "include": ["src/**/*", "test/**/*"],
-  "exclude": ["node_modules", "dist"]
+    "strictNullChecks": true
+  }
 }
