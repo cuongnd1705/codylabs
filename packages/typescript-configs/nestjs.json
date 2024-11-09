@@ -3,8 +3,6 @@
   "extends": "./base.json",
   "compilerOptions": {
     "module": "CommonJS",
-    "moduleResolution": "Node",
-    "strictBindCallApply": true,
-    "strictNullChecks": true
+    "moduleResolution": "Node"
   }
 }
