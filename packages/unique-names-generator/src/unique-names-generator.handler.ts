@@ -22,10 +22,10 @@ export class UniqueNamesGeneratorHandler {
     const { length, separator, dictionaries, style, seed } = config;
 
     this.dictionaries = dictionaries;
-    this.separator = separator;
-    this.length = length;
-    this.style = style;
-    this.seed = this.convertSeed(seed);
+    this.separator = separator || '_';
+    this.length = length || 1;
+    this.style = style || 'lowerCase';
+    this.seed = this.convertSeed(seed || 1);
     this.tmpSeed = this.seed;
   }
 
