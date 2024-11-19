@@ -3,11 +3,8 @@ import { ModuleRef } from '@nestjs/core';
 import { Observable, from } from 'rxjs';
 import { concatMap, defaultIfEmpty, filter, take } from 'rxjs/operators';
 
+import { SequentialGuardOptions } from '../interfaces';
 import { deferGuard, handleError } from '../utils';
-
-interface SequentialGuardOptions {
-  throwOnError?: boolean;
-}
 
 export const SequentialGuard = (
   guards: Array<Type<CanActivate> | InjectionToken>,

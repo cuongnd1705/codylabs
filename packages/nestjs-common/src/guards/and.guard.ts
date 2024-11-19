@@ -3,12 +3,8 @@ import { ModuleRef } from '@nestjs/core';
 import { Observable, from } from 'rxjs';
 import { concatMap, every, last, mergeMap } from 'rxjs/operators';
 
+import { AndGuardOptions } from '../interfaces';
 import { deferGuard, handleError } from '../utils';
-
-interface AndGuardOptions {
-  throwOnFirstError?: boolean;
-  sequential?: boolean;
-}
 
 export const AndGuard = (guards: Array<Type<CanActivate> | InjectionToken>, andGuardOptions?: AndGuardOptions) => {
   class AndMixinGuard implements CanActivate {

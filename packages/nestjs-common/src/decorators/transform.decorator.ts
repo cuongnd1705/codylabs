@@ -1,37 +1,27 @@
 import { Transform } from 'class-transformer';
 
+const trimValue = (value: string) => value.trim().replace(/\s\s+/g, ' ');
+const toBooleanValue = (value: string) => (value === 'true' ? true : value === 'false' ? false : value);
+const toNumberValue = (value: any) => (Number.isNaN(Number(value)) ? value : Number(value));
+
 export const Trim = () =>
   Transform((parameters) => {
     const value = parameters.value as string[] | string;
 
-    if (Array.isArray(value)) {
-      return value.map((v: string) => v.trim().replace(/\s\s+/g, ' '));
-    }
-
-    return value.trim().replaceAll(/\s\s+/g, ' ');
+    return Array.isArray(value) ? value.map(trimValue) : trimValue(value);
   });
 
 export const ToBoolean = () =>
-  Transform(
-    (parameters) => {
-      switch (parameters.value) {
-        case 'true': {
-          return true;
-        }
-        case 'false': {
-          return false;
-        }
-        default: {
-          return parameters.value as boolean;
-        }
-      }
-    },
-    {
-      toClassOnly: true,
-    },
-  );
+  Transform((parameters) => toBooleanValue(parameters.value), {
+    toClassOnly: true,
+  });
 
 export const ToArray = () =>
   Transform((parameters) => (Array.isArray(parameters.value) ? parameters.value : [parameters.value]), {
+    toClassOnly: true,
+  });
+
+export const ToNumber = () =>
+  Transform((parameters) => toNumberValue(parameters.value), {
     toClassOnly: true,
   });

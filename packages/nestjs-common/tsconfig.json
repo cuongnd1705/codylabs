@@ -1,5 +1,5 @@
 {
-  "extends": "@codylabs/typescript-configs/base.json",
+  "extends": "@codylabs/typescript-configs/nestjs.json",
   "compilerOptions": {
     "outDir": "dist"
   },

@@ -34,9 +34,11 @@ export const IsNumberField = (numberFieldOptions?: NumberFieldOptions) => {
     Type(() => Number),
     Min(options.min, {
       each: options.each,
+      message: `The value must be at least ${options.min}`,
     }),
     Max(options.max, {
       each: options.each,
+      message: `The value must be no more than ${options.max}`,
     }),
   ];
 
@@ -44,6 +46,7 @@ export const IsNumberField = (numberFieldOptions?: NumberFieldOptions) => {
     decoratorsToApply.push(
       IsInt({
         each: options.each,
+        message: 'The value must be an integer',
       }),
     );
   } else {
@@ -52,6 +55,7 @@ export const IsNumberField = (numberFieldOptions?: NumberFieldOptions) => {
         {},
         {
           each: options.each,
+          message: 'The value must be a number',
         },
       ),
     );
@@ -61,6 +65,7 @@ export const IsNumberField = (numberFieldOptions?: NumberFieldOptions) => {
     decoratorsToApply.push(
       IsPositive({
         each: options.each,
+        message: 'The value must be positive',
       }),
     );
   }
@@ -69,22 +74,37 @@ export const IsNumberField = (numberFieldOptions?: NumberFieldOptions) => {
     decoratorsToApply.push(
       IsNotEmpty({
         each: options.each,
+        message: 'This field is required',
       }),
     );
 
     if (options.each) {
-      decoratorsToApply.push(ArrayNotEmpty());
+      decoratorsToApply.push(
+        ArrayNotEmpty({
+          message: 'The array must not be empty',
+        }),
+      );
     }
   } else {
-    decoratorsToApply.push(IsOptional());
+    decoratorsToApply.push(
+      IsOptional({
+        message: 'This field is optional',
+      }),
+    );
   }
 
   if (options.each) {
     decoratorsToApply.push(
       ToArray(),
-      IsArray(),
-      ArrayMinSize(options.arrayMinSize),
-      ArrayMaxSize(options.arrayMaxSize),
+      IsArray({
+        message: 'The value must be an array',
+      }),
+      ArrayMinSize(options.arrayMinSize, {
+        message: `The array must contain at least ${options.arrayMinSize} items`,
+      }),
+      ArrayMaxSize(options.arrayMaxSize, {
+        message: `The array must contain no more than ${options.arrayMaxSize} items`,
+      }),
     );
   }
 
