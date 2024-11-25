@@ -34,7 +34,7 @@
     "forceConsistentCasingInFileNames": true,
     "isolatedModules": true,
 
-    "target": "ES2023",
+    "target": "ES2022",
     "useDefineForClassFields": true,
     "experimentalDecorators": true,
     "emitDecoratorMetadata": true,
