@@ -1,0 +1,8 @@
+{
+  "extends": "@codylabs/typescript-configs/nestjs.json",
+  "compilerOptions": {
+    "outDir": "dist"
+  },
+  "include": ["src", "turbo", "src/tsconfig.spec.json"],
+  "exclude": ["node_modules", "dist"]
+}
