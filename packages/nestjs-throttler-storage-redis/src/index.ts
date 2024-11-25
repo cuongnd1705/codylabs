@@ -1,2 +1,2 @@
-export * from './throttler-storage-redis.type';
-export * from './throttler-storage-redis.service';
+export * from './services';
+export * from './types';

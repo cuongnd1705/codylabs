@@ -10,7 +10,7 @@ import {
   createCluster,
 } from 'redis';
 
-import { RedisClientConnectionType, RedisOptions } from './throttler-storage-redis.type';
+import { RedisClientConnectionType, RedisOptions } from '../types';
 
 @Injectable()
 export class ThrottlerStorageRedisService implements ThrottlerStorage, OnModuleDestroy {
