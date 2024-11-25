@@ -1,9 +1,8 @@
+import { isEmpty, snake } from '@codylabs/helper-fns';
 import { ArgumentsHost, Catch, ExceptionFilter, UnprocessableEntityException } from '@nestjs/common';
 import { HttpArgumentsHost } from '@nestjs/common/interfaces';
 import { ValidationError } from 'class-validator';
 import { Response } from 'express';
-
-import { isEmpty, snakeCase } from '../utils';
 
 @Catch(UnprocessableEntityException)
 export class UnprocessableEntityExceptionFilter implements ExceptionFilter<UnprocessableEntityException> {
@@ -31,7 +30,7 @@ export class UnprocessableEntityExceptionFilter implements ExceptionFilter<Unpro
       if (validationError.constraints) {
         for (const [constraintKey, constraint] of Object.entries(validationError.constraints)) {
           if (!constraint) {
-            validationError.constraints[constraintKey] = `error.fields.${snakeCase(constraintKey)}`;
+            validationError.constraints[constraintKey] = `error.fields.${snake(constraintKey)}`;
           }
         }
       }

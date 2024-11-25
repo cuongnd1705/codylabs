@@ -9,15 +9,23 @@
   "types": "./dist/index.d.ts",
   "files": ["dist/**"],
   "scripts": {
-    "build": "tsc",
+    "build": "tsc -p tsconfig.build.json",
     "clean": "rm -rf .turbo node_modules dist",
-    "test": "jest"
+    "test": "jest --passWithNoTests",
+    "test:watch": "jest --watch"
   },
   "devDependencies": {
+    "@codylabs/helper-fns": "workspace:*",
     "@codylabs/typescript-configs": "workspace:*",
+    "@nestjs/common": "^10.4.8",
+    "@nestjs/core": "^10.4.8",
+    "@nestjs/platform-express": "^10.4.8",
     "@types/express": "^5.0.0",
+    "class-transformer": "^0.5.1",
+    "class-validator": "^0.14.1",
     "express": "^4.21.1",
-    "typescript": "^5.6.3"
+    "reflect-metadata": "^0.2.2",
+    "rxjs": "^7.8.1"
   },
   "publishConfig": {
     "access": "public"

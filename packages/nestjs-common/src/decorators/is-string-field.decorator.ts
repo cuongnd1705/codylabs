@@ -1,28 +1,20 @@
-import { applyDecorators } from '@nestjs/common';
-import {
-  ArrayMaxSize,
-  ArrayMinSize,
-  ArrayNotEmpty,
-  IsArray,
-  IsBase64,
-  IsNotEmpty,
-  IsNumberString,
-  IsOptional,
-  IsString,
-  Matches,
-} from 'class-validator';
+import { normalizeEmail } from '@codylabs/helper-fns';
+import { IsBase64, IsEmail, IsNumberString, IsString, IsUrl, Matches } from 'class-validator';
 
+import { Transform } from 'class-transformer';
 import { StringFieldOptions } from '../interfaces';
+import { applyCommonDecorators } from '../utils';
 import { MinMaxLength } from './min-max-length.decorator';
-import { ToArray, Trim } from './transform.decorator';
+import { Trim } from './transform.decorator';
 
 export const IsStringField = (stringFieldOptions?: StringFieldOptions) => {
   const options: StringFieldOptions = {
     required: true,
     numberString: false,
     base64: false,
+    url: false,
+    email: false,
     each: false,
-    sanitize: false,
     trim: false,
     minLength: 1,
     maxLength: Number.MAX_SAFE_INTEGER,
@@ -50,6 +42,30 @@ export const IsStringField = (stringFieldOptions?: StringFieldOptions) => {
         {
           each: options.each,
           message: 'The value must be a base64 string',
+        },
+      ),
+    );
+  } else if (options.url) {
+    decoratorsToApply.push(
+      IsUrl(
+        {},
+        {
+          each: options.each,
+          message: 'The value must be a URL',
+        },
+      ),
+    );
+  } else if (options.email) {
+    decoratorsToApply.push(
+      Transform(({ value }: { value: string }) => value.toLowerCase(), { toClassOnly: true }),
+      Transform(({ value }): string => (typeof value === 'string' ? normalizeEmail(value) : value), {
+        toClassOnly: true,
+      }),
+      IsEmail(
+        {},
+        {
+          each: options.each,
+          message: 'The value must be a valid email address',
         },
       ),
     );
@@ -82,43 +98,5 @@ export const IsStringField = (stringFieldOptions?: StringFieldOptions) => {
     decoratorsToApply.push(Trim());
   }
 
-  if (options.required) {
-    decoratorsToApply.push(
-      IsNotEmpty({
-        each: options.each,
-        message: 'This field is required',
-      }),
-    );
-
-    if (options.each) {
-      decoratorsToApply.push(
-        ArrayNotEmpty({
-          message: 'The array must not be empty',
-        }),
-      );
-    }
-  } else {
-    decoratorsToApply.push(
-      IsOptional({
-        message: 'This field is optional',
-      }),
-    );
-  }
-
-  if (options.each) {
-    decoratorsToApply.push(
-      ToArray(),
-      IsArray({
-        message: 'The value must be an array',
-      }),
-      ArrayMinSize(options.arrayMinSize, {
-        message: `The array must contain at least ${options.arrayMinSize} items`,
-      }),
-      ArrayMaxSize(options.arrayMaxSize, {
-        message: `The array must contain no more than ${options.arrayMaxSize} items`,
-      }),
-    );
-  }
-
-  return applyDecorators(...decoratorsToApply);
+  return applyCommonDecorators(options, decoratorsToApply);
 };

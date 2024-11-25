@@ -24,6 +24,7 @@ export class UpdateSelectiveValidationInterceptor implements NestInterceptor {
         if (!response || typeof response !== 'object') {
           return response;
         }
+
         return this.filterObject(response as Record<string, unknown>, validFields);
       }),
     );
