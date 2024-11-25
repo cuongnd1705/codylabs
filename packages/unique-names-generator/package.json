@@ -6,14 +6,18 @@
   "license": "MIT",
   "author": "Cody Nguyen",
   "main": "./dist/index.js",
+  "module": "./dist/index.mjs",
   "types": "./dist/index.d.ts",
   "files": ["dist/**"],
   "scripts": {
-    "build": "tsc",
-    "clean": "rm -rf .turbo node_modules dist"
+    "build": "tsup src/index.ts --format cjs,esm --dts",
+    "clean": "rm -rf .turbo node_modules dist",
+    "test": "jest --passWithNoTests",
+    "test:watch": "jest --watch"
   },
   "devDependencies": {
     "@codylabs/typescript-configs": "workspace:*",
+    "tsup": "^6.0.0",
     "typescript": "^5.6.3"
   },
   "publishConfig": {
