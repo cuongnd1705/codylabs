@@ -1,8 +1,7 @@
 {
   "name": "@codylabs/nestjs-common",
   "version": "0.0.1",
-  "private": true,
-  "description": "",
+  "description": "Common utilities for NestJS applications",
   "license": "MIT",
   "author": "Cody Nguyen",
   "main": "./dist/index.js",
