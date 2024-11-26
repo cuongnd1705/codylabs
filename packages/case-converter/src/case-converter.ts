@@ -25,7 +25,6 @@ const DEFAULT_SPLIT = /(?=[A-Z])/;
  */
 const isDate = (value: any): value is Date => value instanceof Date;
 const isRegExp = (value: any): value is RegExp => value instanceof RegExp;
-// biome-ignore lint/complexity/noBannedTypes: <explanation>
 const isFunction = (value: any): value is Function => typeof value === 'function';
 const isObject = (value: any): boolean => {
   return value !== null && typeof value === 'object';
