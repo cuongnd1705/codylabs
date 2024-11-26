@@ -1,8 +1,7 @@
 {
   "name": "@codylabs/nestjs-redis",
   "version": "0.0.1",
-  "private": true,
-  "description": "",
+  "description": "Redis (using node-redis) module for NestJS",
   "license": "MIT",
   "author": "Cody Nguyen",
   "main": "./dist/index.js",
@@ -15,7 +14,6 @@
     "test:watch": "jest --watch"
   },
   "devDependencies": {
-    "@codylabs/helper-fns": "workspace:*",
     "@codylabs/typescript-configs": "workspace:*"
   },
   "peerDependencies": {
