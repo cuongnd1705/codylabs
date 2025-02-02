@@ -1,8 +1,7 @@
 {
   "name": "@codylabs/helper-fns",
   "version": "0.0.1",
-  "private": true,
-  "description": "",
+  "description": "Functional TypeScript utility library - modern, simple, typed, powerful",
   "license": "MIT",
   "author": "Cody Nguyen",
   "main": "./dist/index.js",
