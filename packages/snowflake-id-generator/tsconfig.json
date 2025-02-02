@@ -1,0 +1,11 @@
+{
+  "extends": "@codylabs/typescript-configs/base.json",
+  "compilerOptions": {
+    "emitDecoratorMetadata": false,
+    "incremental": false,
+    "baseUrl": "src",
+    "outDir": "dist"
+  },
+  "include": ["src", "turbo"],
+  "exclude": ["node_modules", "dist"]
+}

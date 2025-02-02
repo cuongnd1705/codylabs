@@ -163,6 +163,18 @@ importers:
         specifier: ^5.6.3
         version: 5.6.3
 
+  packages/snowflake-id-generator:
+    devDependencies:
+      '@codylabs/typescript-configs':
+        specifier: workspace:*
+        version: link:../typescript-configs
+      tsup:
+        specifier: ^6.0.0
+        version: 6.7.0(ts-node@10.9.2(@types/node@22.9.1)(typescript@5.6.3))(typescript@5.6.3)
+      typescript:
+        specifier: ^5.6.3
+        version: 5.6.3
+
   packages/typescript-configs: {}
 
   packages/unique-names-generator:
