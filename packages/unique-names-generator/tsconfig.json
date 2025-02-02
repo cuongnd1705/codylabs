@@ -1,6 +1,8 @@
 {
   "extends": "@codylabs/typescript-configs/base.json",
   "compilerOptions": {
+    "emitDecoratorMetadata": false,
+    "incremental": false,
     "baseUrl": "src",
     "outDir": "dist"
   },
