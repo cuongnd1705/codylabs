@@ -28,6 +28,10 @@ export class ThrottlerStorageRedisService implements ThrottlerStorage, OnModuleD
     connect: string | RedisClientOptions | RedisClusterOptions | RedisClientConnectionType,
     options?: RedisOptions,
   ) {
+    if (!connect) {
+      throw new Error('No connection options provided');
+    }
+
     if (typeof connect === 'string') {
       this.client = createClient({
         url: connect,
