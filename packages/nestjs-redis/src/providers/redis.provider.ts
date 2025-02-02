@@ -18,11 +18,11 @@ import {
 import { RedisClientOpts, RedisModuleAsyncOptions, RedisModuleOptions, RedisOptionsFactory } from '../interfaces';
 import { RedisClientConnectionType, RedisClients } from '../types';
 
-const createRedisClient = ({
+const createRedisClient = async ({
   namespace,
   onClientCreated,
   ...redisOptions
-}: RedisClientOpts): RedisClientConnectionType => {
+}: RedisClientOpts): Promise<RedisClientConnectionType> => {
   const client =
     (redisOptions as any).rootNodes === undefined
       ? (createClient(redisOptions as RedisClientOptions) as RedisClientType)
@@ -34,6 +34,10 @@ const createRedisClient = ({
     enumerable: false,
     configurable: false,
   });
+
+  if (!client.isOpen) {
+    await client.connect();
+  }
 
   if (onClientCreated) {
     onClientCreated(client);
@@ -100,13 +104,13 @@ export const createAsyncOptionsProvider = (options: RedisModuleAsyncOptions): Pr
 
 export const redisClientsProvider: FactoryProvider<RedisClients> = {
   provide: REDIS_CLIENTS,
-  useFactory: (options: RedisModuleOptions) => {
+  useFactory: async (options: RedisModuleOptions) => {
     const clients: RedisClients = new Map();
 
     if (Array.isArray(options.clientConfigurations)) {
       for (const clientConfiguration of options.clientConfigurations) {
         const namespace = clientConfiguration.namespace ?? DEFAULT_REDIS_NAMESPACE;
-        const client = createRedisClient({
+        const client = await createRedisClient({
           ...options.sharedOptions,
           ...clientConfiguration,
         });
@@ -115,7 +119,7 @@ export const redisClientsProvider: FactoryProvider<RedisClients> = {
       }
     } else if (options.clientConfigurations) {
       const namespace = options.clientConfigurations.namespace ?? DEFAULT_REDIS_NAMESPACE;
-      const client = createRedisClient(options.clientConfigurations);
+      const client = await createRedisClient(options.clientConfigurations);
 
       clients.set(namespace, client);
     }
