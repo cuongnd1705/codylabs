@@ -1,6 +1,5 @@
 export * from './is-boolean-field.decorator';
 export * from './is-date-field.decorator';
-export * from './is-email.decorator';
 export * from './is-enum-field.decorator';
 export * from './is-nested-field.decorator';
 export * from './is-number-field.decorator';

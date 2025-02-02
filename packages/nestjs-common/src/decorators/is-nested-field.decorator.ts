@@ -1,17 +1,8 @@
-import { applyDecorators } from '@nestjs/common';
 import { Type } from 'class-transformer';
-import {
-  ArrayMaxSize,
-  ArrayMinSize,
-  ArrayNotEmpty,
-  IsArray,
-  IsNotEmpty,
-  IsOptional,
-  ValidateNested,
-} from 'class-validator';
+import { ValidateNested } from 'class-validator';
 
 import { NestedFieldOptions } from '../interfaces';
-import { ToArray } from './transform.decorator';
+import { applyCommonDecorators } from '../utils';
 
 export const IsNestedField = (entity: any, nestedFieldOptions?: NestedFieldOptions) => {
   const options: NestedFieldOptions = {
@@ -30,43 +21,5 @@ export const IsNestedField = (entity: any, nestedFieldOptions?: NestedFieldOptio
     Type(() => entity),
   ];
 
-  if (options.required) {
-    decoratorsToApply.push(
-      IsNotEmpty({
-        each: options.each,
-        message: 'This field is required',
-      }),
-    );
-
-    if (options.each) {
-      decoratorsToApply.push(
-        ArrayNotEmpty({
-          message: 'The array must not be empty',
-        }),
-      );
-    }
-  } else {
-    decoratorsToApply.push(
-      IsOptional({
-        message: 'This field is optional',
-      }),
-    );
-  }
-
-  if (options.each) {
-    decoratorsToApply.push(
-      ToArray(),
-      IsArray({
-        message: 'The value must be an array',
-      }),
-      ArrayMinSize(options.arrayMinSize, {
-        message: `The array must contain at least ${options.arrayMinSize} items`,
-      }),
-      ArrayMaxSize(options.arrayMaxSize, {
-        message: `The array must contain no more than ${options.arrayMaxSize} items`,
-      }),
-    );
-  }
-
-  return applyDecorators(...decoratorsToApply);
+  return applyCommonDecorators(options, decoratorsToApply);
 };
