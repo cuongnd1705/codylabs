@@ -10,7 +10,8 @@
   "files": ["dist/**"],
   "scripts": {
     "build": "tsc",
-    "clean": "rm -rf .turbo node_modules dist"
+    "clean": "rm -rf .turbo node_modules dist",
+    "test": "jest"
   },
   "devDependencies": {
     "@codylabs/typescript-configs": "workspace:*",

@@ -3,32 +3,37 @@ import { ArgumentMetadata, Injectable, PipeTransform, UnprocessableEntityExcepti
 @Injectable()
 export class SnowflakeIdParamValidationPipe<T> implements PipeTransform {
   transform(value: T, metadata: ArgumentMetadata) {
-    if (value === null || value === undefined) {
-      throw new UnprocessableEntityException([
-        {
-          property: metadata.data,
-          constraints: {
-            isNotEmpty: 'this field is required',
-          },
-        },
-      ]);
+    if (this.isEmpty(value)) {
+      this.throwException(metadata.data, 'This field is required');
     }
 
-    if (typeof value !== 'number' && !this.isNumberString(String(value))) {
-      throw new UnprocessableEntityException([
-        {
-          property: metadata.data,
-          constraints: {
-            isDataType: 'this field must be a number',
-          },
-        },
-      ]);
+    if (!this.isNumber(value)) {
+      this.throwException(metadata.data, 'The value must be a number');
     }
 
     return value;
   }
 
+  private isEmpty(value: T): boolean {
+    return value === null || value === undefined;
+  }
+
+  private isNumber(value: T): boolean {
+    return typeof value === 'number' || this.isNumberString(String(value));
+  }
+
   private isNumberString(value: string): boolean {
     return !Number.isNaN(Number(value)) && value.trim() !== '';
+  }
+
+  private throwException(property: string, message: string): void {
+    throw new UnprocessableEntityException([
+      {
+        property,
+        constraints: {
+          isNotEmpty: message,
+        },
+      },
+    ]);
   }
 }

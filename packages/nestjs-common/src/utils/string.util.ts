@@ -10,3 +10,18 @@ export const normalizeEmail = (email: string): string => {
 
   return result;
 };
+
+export const snakeCase = (str: string): string => {
+  return str
+    .replace(/([a-z])([A-Z])/g, '$1_$2')
+    .replace(/[\s-]+/g, '_')
+    .toLowerCase();
+};
+
+export const isEmpty = (value: any): boolean => {
+  return (
+    value == null ||
+    ((typeof value === 'string' || Array.isArray(value)) && value.length === 0) ||
+    (typeof value === 'object' && Object.keys(value).length === 0)
+  );
+};

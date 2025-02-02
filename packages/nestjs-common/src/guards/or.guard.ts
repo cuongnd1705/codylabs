@@ -3,11 +3,8 @@ import { ModuleRef } from '@nestjs/core';
 import { Observable, from } from 'rxjs';
 import { last, mergeMap, takeWhile } from 'rxjs/operators';
 
+import { OrGuardOptions } from '../interfaces';
 import { deferGuard, handleError } from '../utils';
-
-interface OrGuardOptions {
-  throwOnFirstError?: boolean;
-}
 
 export const OrGuard = (guards: Array<Type<CanActivate> | InjectionToken>, orGuardOptions?: OrGuardOptions) => {
   class OrMixinGuard implements CanActivate {
