@@ -1,0 +1,29 @@
+{
+  "name": "@codylabs/nestjs-redis",
+  "version": "0.0.1",
+  "private": true,
+  "description": "",
+  "license": "MIT",
+  "author": "Cody Nguyen",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "files": ["dist/**"],
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "clean": "rm -rf .turbo node_modules dist",
+    "test": "jest --passWithNoTests",
+    "test:watch": "jest --watch"
+  },
+  "devDependencies": {
+    "@codylabs/helper-fns": "workspace:*",
+    "@codylabs/typescript-configs": "workspace:*"
+  },
+  "peerDependencies": {
+    "@nestjs/common": "^10.0.0",
+    "@nestjs/core": "^10.0.0",
+    "redis": "^4.7.0"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}
