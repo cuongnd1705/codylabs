@@ -1,42 +1,48 @@
 {
   "$schema": "https://json.schemastore.org/tsconfig",
   "compilerOptions": {
+    "strict": true,
+    "noImplicitAny": true,
+    "noImplicitThis": true,
+    "strictNullChecks": true,
+    "strictPropertyInitialization": true,
+    "noUncheckedIndexedAccess": true,
     "allowUnreachableCode": false,
     "allowUnusedLabels": false,
-    "alwaysStrict": true,
-    "exactOptionalPropertyTypes": false,
     "noFallthroughCasesInSwitch": true,
-    "noImplicitAny": false,
     "noImplicitOverride": true,
     "noImplicitReturns": true,
-    "noImplicitThis": false,
-    "noUncheckedIndexedAccess": true,
-    "noUnusedLocals": false,
-    "noUnusedParameters": false,
-    "strict": true,
-    "strictNullChecks": false,
-    "strictPropertyInitialization": false,
-    "module": "CommonJS",
-    "moduleResolution": "Node",
-    "resolveJsonModule": false,
-    "declaration": false,
+    "exactOptionalPropertyTypes": true,
+
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "resolveJsonModule": true,
+    "moduleDetection": "force",
+
+    "declaration": true,
     "newLine": "lf",
     "noEmitOnError": true,
     "removeComments": true,
     "sourceMap": true,
     "stripInternal": true,
+
     "allowJs": true,
+    "checkJs": true,
+
     "allowSyntheticDefaultImports": true,
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,
     "isolatedModules": true,
-    "emitDecoratorMetadata": true,
-    "experimentalDecorators": true,
+
     "target": "ES2023",
     "useDefineForClassFields": true,
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true,
+
     "incremental": true,
-    "pretty": true,
     "skipLibCheck": true,
-    "moduleDetection": "force"
-  }
+
+    "pretty": true
+  },
+  "exclude": ["node_modules", "dist", "build"]
 }
