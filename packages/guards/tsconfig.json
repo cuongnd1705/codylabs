@@ -1,9 +1,0 @@
-{
-  "extends": "@cody-nestjs-toolkit/typescript-config/base.json",
-  "compilerOptions": {
-    "baseUrl": "src",
-    "outDir": "dist"
-  },
-  "include": ["src", "turbo"],
-  "exclude": ["node_modules", "dist"]
-}
