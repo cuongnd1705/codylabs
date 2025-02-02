@@ -148,7 +148,6 @@ describe('case-converter', () => {
         email_address: 'john@example.com',
       };
 
-      // biome-ignore lint/complexity/noBannedTypes: <explanation>
       const customProcess = (key: string, convert: Function) => `prefix_${convert(key)}`;
 
       const expected = {
