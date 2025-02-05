@@ -3,6 +3,7 @@
   "compilerOptions": {
     "emitDecoratorMetadata": false,
     "incremental": false,
+    "moduleResolution": "node",
     "baseUrl": "src",
     "outDir": "dist"
   },
