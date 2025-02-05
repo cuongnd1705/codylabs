@@ -23,7 +23,7 @@
     "lint:check": "eslint \"packages/**/*.ts\"",
     "lint:fix": "eslint \"packages/**/*.ts\" --fix",
     "prepare": "husky",
-    "publish-packages": "turbo run build biome:check && changeset version && changeset publish",
+    "publish-packages": "turbo run build lint:check && changeset version && changeset publish",
     "test": "turbo test"
   },
   "lint-staged": {
