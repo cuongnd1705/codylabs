@@ -1,6 +1,6 @@
 {
   "name": "@codylabs/snowflake-id-generator",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "A Snowflake ID generator for unique identifier creation.",
   "author": "Cody Nguyen",
   "main": "./dist/index.js",
@@ -10,6 +10,7 @@
     "dist/**"
   ],
   "scripts": {
+    "prebuild": "rimraf dist",
     "build": "tsup src/index.ts --format cjs,esm --dts",
     "clean": "rm -rf .turbo node_modules dist",
     "test": "jest --passWithNoTests",

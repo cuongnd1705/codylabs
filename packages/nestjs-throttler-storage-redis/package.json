@@ -1,13 +1,16 @@
 {
   "name": "@codylabs/nestjs-throttler-storage-redis",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "Redis (using node-redis) storage provider for the @nestjs/throttler package",
   "license": "MIT",
   "author": "Cody Nguyen",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
-  "files": ["dist/**"],
+  "files": [
+    "dist/**"
+  ],
   "scripts": {
+    "prebuild": "rimraf dist",
     "build": "tsc -p tsconfig.build.json",
     "clean": "rm -rf .turbo node_modules dist",
     "test": "jest --passWithNoTests",

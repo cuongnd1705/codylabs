@@ -1,6 +1,6 @@
 {
   "name": "@codylabs/helper-fns",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "Functional TypeScript utility library - modern, simple, typed, powerful",
   "license": "MIT",
   "author": "Cody Nguyen",
@@ -11,6 +11,7 @@
     "dist/**"
   ],
   "scripts": {
+    "prebuild": "rimraf dist",
     "build": "tsup src/index.ts --format cjs,esm --dts",
     "clean": "rm -rf .turbo node_modules dist",
     "test": "jest --passWithNoTests",
