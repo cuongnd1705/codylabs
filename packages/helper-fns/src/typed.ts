@@ -106,12 +106,12 @@ export const isEqual = <T>(x: T, y: T): boolean => {
     return false;
   }
 
-  for (let i = 0; i < keysX.length; i++) {
-    if (!Reflect.has(y as unknown as object, keysX[i])) {
+  for (const key of keysX) {
+    if (!Reflect.has(y as unknown as object, key)) {
       return false;
     }
 
-    if (!isEqual(x[keysX[i]], y[keysX[i]])) {
+    if (!isEqual(x[key], y[key])) {
       return false;
     }
   }

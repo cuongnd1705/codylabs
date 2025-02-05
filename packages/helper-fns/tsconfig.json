@@ -8,6 +8,14 @@
     "baseUrl": "src",
     "outDir": "dist"
   },
-  "include": ["src", "turbo"],
-  "exclude": ["node_modules", "dist"]
+  "include": [
+    "src",
+    "test",
+    "turbo",
+    "jest.config.ts"
+  ],
+  "exclude": [
+    "node_modules",
+    "dist"
+  ]
 }

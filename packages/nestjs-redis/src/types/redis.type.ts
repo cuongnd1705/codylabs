@@ -1,6 +1,6 @@
 import type { RedisClientType, RedisClusterType, RedisFunctions, RedisModules, RedisScripts } from 'redis';
 
-export type Namespace = string | Symbol;
+export type Namespace = string | symbol;
 
 export type RedisClientConnectionType = RedisClientType | RedisClusterType<RedisModules, RedisFunctions, RedisScripts>;
 

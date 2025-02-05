@@ -1,7 +1,9 @@
 {
   "name": "@codylabs/typescript-configs",
   "version": "0.0.6",
+  "description": "Shared TypeScript configurations",
   "license": "MIT",
+  "author": "Cody Nguyen",
   "publishConfig": {
     "access": "public"
   }

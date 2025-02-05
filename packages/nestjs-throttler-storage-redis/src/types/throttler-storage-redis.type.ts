@@ -2,7 +2,7 @@ import type { RedisClientType, RedisClusterType, RedisFunctions, RedisModules, R
 
 export type RedisClientConnectionType = RedisClientType | RedisClusterType<RedisModules, RedisFunctions, RedisScripts>;
 
-export type RedisOptions = {
+export interface RedisOptions {
   /**
    * Namespace for the current instance.
    */
@@ -17,6 +17,6 @@ export type RedisOptions = {
    * Close the connection after the module is destroyed.
    */
   closeAfterDestroyed?: boolean;
-};
+}
 
 export const ThrottlerStorageRedis = Symbol('ThrottlerStorageRedis');

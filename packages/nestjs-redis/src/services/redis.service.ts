@@ -18,7 +18,7 @@ export class RedisService {
     const client = this.clients.get(namespace);
 
     if (!client) {
-      throw new Error(`No Connection found for namespace: ${namespace}`);
+      throw new Error(`No Connection found for namespace: ${String(namespace)}`);
     }
 
     return client;

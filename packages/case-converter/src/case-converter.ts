@@ -1,7 +1,7 @@
 /**
  * Type definition for processing options used in case conversion
  */
-type ProcessOptions = {
+interface ProcessOptions {
   /** Custom separator to use between words (default: '_') */
   separator?: string;
 
@@ -14,7 +14,7 @@ type ProcessOptions = {
     convert: (key: string, options?: ProcessOptions) => string,
     options?: ProcessOptions,
   ) => string;
-};
+}
 
 // Default configuration constants
 const DEFAULT_SEPARATOR = '_';

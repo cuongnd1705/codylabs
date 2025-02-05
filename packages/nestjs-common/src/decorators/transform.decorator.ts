@@ -1,7 +1,19 @@
 import { Transform } from 'class-transformer';
 
 const trimValue = (value: string) => value.trim().replace(/\s\s+/g, ' ');
-const toBooleanValue = (value: string) => (value === 'true' ? true : value === 'false' ? false : value);
+
+const toBooleanValue = (value: string) => {
+  if (value === 'true') {
+    return true;
+  }
+
+  if (value === 'false') {
+    return false;
+  }
+
+  return value;
+};
+
 const toNumberValue = (value: any) => (Number.isNaN(Number(value)) ? value : Number(value));
 
 export const Trim = () =>

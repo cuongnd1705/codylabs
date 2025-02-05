@@ -264,8 +264,11 @@ describe('object module', () => {
     });
     test('works with objects that have `hasOwnProperty` overwritten', () => {
       const obj = { a: 2, b: 4 };
-      // @ts-ignore
-      obj.hasOwnProperty = 'OVERWRITTEN';
+      Object.defineProperty(obj, 'hasOwnProperty', {
+        value: () => 'OVERWRITTEN',
+        configurable: true,
+        writable: true,
+      });
       const result = pick(obj, ['a']);
       expect(result).toEqual({
         a: 2,

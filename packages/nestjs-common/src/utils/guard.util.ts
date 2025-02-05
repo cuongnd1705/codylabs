@@ -1,5 +1,5 @@
 import { CanActivate, ExecutionContext } from '@nestjs/common';
-import { Observable, OperatorFunction, defer, from, of, throwError } from 'rxjs';
+import { defer, from, Observable, of, OperatorFunction, throwError } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 
 export function deferGuard(guard: CanActivate, context: ExecutionContext): Observable<boolean> {

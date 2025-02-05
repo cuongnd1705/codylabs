@@ -8,7 +8,9 @@
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",
   "types": "./dist/index.d.ts",
-  "files": ["dist/**"],
+  "files": [
+    "dist/**"
+  ],
   "scripts": {
     "build": "tsup src/index.ts --format cjs,esm --dts",
     "clean": "rm -rf .turbo node_modules dist",
@@ -18,7 +20,7 @@
   "devDependencies": {
     "@codylabs/typescript-configs": "workspace:*",
     "tsup": "^6.0.0",
-    "typescript": "^5.6.3"
+    "typescript": "^5.7.3"
   },
   "publishConfig": {
     "access": "public"

@@ -7,14 +7,16 @@
   "author": "Cody Nguyen",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
-  "files": ["dist/**"],
+  "files": [
+    "dist/**"
+  ],
   "scripts": {
     "build": "tsc",
     "clean": "rm -rf .turbo node_modules dist"
   },
   "devDependencies": {
     "@codylabs/typescript-configs": "workspace:*",
-    "typescript": "^5.6.3"
+    "typescript": "^5.7.3"
   },
   "peerDependencies": {
     "redis": "^4.7.0"

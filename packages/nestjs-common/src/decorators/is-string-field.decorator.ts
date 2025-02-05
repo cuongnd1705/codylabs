@@ -1,7 +1,7 @@
 import { normalizeEmail } from '@codylabs/helper-fns';
+import { Transform } from 'class-transformer';
 import { IsBase64, IsEmail, IsNumberString, IsString, IsUrl, Matches } from 'class-validator';
 
-import { Transform } from 'class-transformer';
 import { StringFieldOptions } from '../interfaces';
 import { applyCommonDecorators } from '../utils';
 import { MinMaxLength } from './min-max-length.decorator';

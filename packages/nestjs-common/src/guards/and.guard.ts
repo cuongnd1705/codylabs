@@ -1,12 +1,12 @@
-import { CanActivate, ExecutionContext, Inject, InjectionToken, Type, mixin } from '@nestjs/common';
+import { CanActivate, ExecutionContext, Inject, InjectionToken, mixin, Type } from '@nestjs/common';
 import { ModuleRef } from '@nestjs/core';
-import { Observable, from } from 'rxjs';
+import { from, Observable } from 'rxjs';
 import { concatMap, every, last, mergeMap } from 'rxjs/operators';
 
 import { AndGuardOptions } from '../interfaces';
 import { deferGuard, handleError } from '../utils';
 
-export const AndGuard = (guards: Array<Type<CanActivate> | InjectionToken>, andGuardOptions?: AndGuardOptions) => {
+export const AndGuard = (guards: (Type<CanActivate> | InjectionToken)[], andGuardOptions?: AndGuardOptions) => {
   class AndMixinGuard implements CanActivate {
     private guards: CanActivate[] = [];
 
@@ -18,7 +18,7 @@ export const AndGuard = (guards: Array<Type<CanActivate> | InjectionToken>, andG
     canActivate(context: ExecutionContext): Observable<boolean> {
       this.guards = guards.map((guard) => this.moduleRef.get(guard, { strict: false }));
 
-      const canActivateReturns: Array<() => Observable<boolean>> = this.guards.map(
+      const canActivateReturns: (() => Observable<boolean>)[] = this.guards.map(
         (guard) => () => deferGuard(guard, context),
       );
       const mapOperator = andGuardOptions?.sequential ? concatMap : mergeMap;

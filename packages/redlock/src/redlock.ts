@@ -68,12 +68,12 @@ export type ClientExecutionResult =
 /*
  * This object contains a summary of results.
  */
-export type ExecutionStats = {
+export interface ExecutionStats {
   readonly membershipSize: number;
   readonly quorumSize: number;
   readonly votesFor: Set<Client>;
   readonly votesAgainst: Map<Client, Error>;
-};
+}
 
 /*
  * This object contains a summary of results. Because the result of an attempt
@@ -82,10 +82,10 @@ export type ExecutionStats = {
  * finished. A rejection of these promises should be considered undefined
  * behavior and should cause a crash.
  */
-export type ExecutionResult = {
-  attempts: ReadonlyArray<Promise<ExecutionStats>>;
+export interface ExecutionResult {
+  attempts: readonly Promise<ExecutionStats>[];
   start: number;
-};
+}
 
 /**
  *
@@ -127,7 +127,7 @@ export class ResourceLockedError extends Error {
 export class ExecutionError extends Error {
   constructor(
     public override readonly message: string,
-    public readonly attempts: ReadonlyArray<Promise<ExecutionStats>>,
+    public readonly attempts: readonly Promise<ExecutionStats>[],
   ) {
     super();
     this.name = 'ExecutionError';
@@ -144,7 +144,7 @@ export class Lock {
     public readonly redlock: Redlock,
     public readonly resources: string[],
     public readonly value: string,
-    public readonly attempts: ReadonlyArray<Promise<ExecutionStats>>,
+    public readonly attempts: readonly Promise<ExecutionStats>[],
     public expiration: number,
   ) {}
 
@@ -619,10 +619,7 @@ export default class Redlock extends EventEmitter {
     // The AbortController/AbortSignal pattern allows the routine to be notified
     // of a failure to extend the lock, and subsequent expiration. In the event
     // of an abort, the error object will be made available at `signal.error`.
-    const controller =
-      typeof AbortController === 'undefined'
-        ? new (require('abort-controller').AbortController)()
-        : new AbortController();
+    const controller = new AbortController();
 
     const signal = controller.signal as RedlockAbortSignal;
 

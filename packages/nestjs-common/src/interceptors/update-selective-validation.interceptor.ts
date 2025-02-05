@@ -1,5 +1,5 @@
 import { BadRequestException, CallHandler, ExecutionContext, Injectable, NestInterceptor } from '@nestjs/common';
-import { Observable, map } from 'rxjs';
+import { map, Observable } from 'rxjs';
 
 @Injectable()
 export class UpdateSelectiveValidationInterceptor implements NestInterceptor {

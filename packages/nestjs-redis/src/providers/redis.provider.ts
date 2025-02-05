@@ -1,11 +1,11 @@
 import { FactoryProvider, Provider, ValueProvider } from '@nestjs/common';
 import {
+  createClient,
+  createCluster,
   RedisClientOptions,
   RedisClientType,
   RedisClusterOptions,
   RedisClusterType,
-  createClient,
-  createCluster,
 } from 'redis';
 
 import {

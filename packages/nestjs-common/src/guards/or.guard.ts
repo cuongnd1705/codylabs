@@ -1,12 +1,12 @@
-import { CanActivate, ExecutionContext, Inject, InjectionToken, Type, mixin } from '@nestjs/common';
+import { CanActivate, ExecutionContext, Inject, InjectionToken, mixin, Type } from '@nestjs/common';
 import { ModuleRef } from '@nestjs/core';
-import { Observable, from } from 'rxjs';
+import { from, Observable } from 'rxjs';
 import { last, mergeMap, takeWhile } from 'rxjs/operators';
 
 import { OrGuardOptions } from '../interfaces';
 import { deferGuard, handleError } from '../utils';
 
-export const OrGuard = (guards: Array<Type<CanActivate> | InjectionToken>, orGuardOptions?: OrGuardOptions) => {
+export const OrGuard = (guards: (Type<CanActivate> | InjectionToken)[], orGuardOptions?: OrGuardOptions) => {
   class OrMixinGuard implements CanActivate {
     private guards: CanActivate[] = [];
 
@@ -18,7 +18,7 @@ export const OrGuard = (guards: Array<Type<CanActivate> | InjectionToken>, orGua
     canActivate(context: ExecutionContext): Observable<boolean> {
       this.guards = guards.map((guard) => this.moduleRef.get(guard, { strict: false }));
 
-      const canActivateReturns: Array<Observable<boolean>> = this.guards.map((guard) => deferGuard(guard, context));
+      const canActivateReturns: Observable<boolean>[] = this.guards.map((guard) => deferGuard(guard, context));
 
       return from(canActivateReturns).pipe(
         mergeMap((obs) => obs.pipe(handleError(orGuardOptions?.throwOnFirstError))),

@@ -2,12 +2,12 @@ import { Injectable, OnModuleDestroy } from '@nestjs/common';
 import { ThrottlerStorage } from '@nestjs/throttler';
 import { ThrottlerStorageRecord } from '@nestjs/throttler/dist/throttler-storage-record.interface';
 import {
+  createClient,
+  createCluster,
   RedisClientOptions,
   RedisClientType,
   RedisClusterOptions,
   RedisClusterType,
-  createClient,
-  createCluster,
 } from 'redis';
 
 import { RedisClientConnectionType, RedisOptions } from '../types';
