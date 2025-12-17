@@ -9,32 +9,16 @@ import pluginUnusedImports from 'eslint-plugin-unused-imports';
 import globals from 'globals';
 import eslintTS from 'typescript-eslint';
 
-const tsFiles = ['packages/**/*.ts'];
-const testFiles = ['packages/**/*.{spec,test}.ts'];
-
 /** @type {import('eslint').Linter.Config[]} */
 export default [
   {
     ignores: ['node_modules/*', '**/node_modules', 'dist/**/*', '**/dist', 'logs/**/*', '.turbo', '**/.turbo'],
   },
   eslintJS.configs.recommended,
-  ...eslintTS.configs.recommended.map((config) => ({
-    ...config,
-    files: tsFiles,
-  })),
-  ...eslintTS.configs.stylistic.map((config) => ({
-    ...config,
-    files: tsFiles,
-  })),
+  ...eslintTS.configs.recommended,
+  ...eslintTS.configs.stylistic,
   {
-    files: tsFiles,
-    plugins: {
-      'simple-import-sort': pluginSimpleImportSort,
-      import: pluginImport,
-      'import/parsers': tsParser,
-      'unused-imports': pluginUnusedImports,
-      unicorn: pluginUnicorn,
-    },
+    files: ['packages/**/*.ts'],
     languageOptions: {
       globals: {
         ...globals.node,
@@ -47,6 +31,13 @@ export default [
         project: true,
         tsconfigRootDir: import.meta.dirname,
       },
+    },
+    plugins: {
+      'simple-import-sort': pluginSimpleImportSort,
+      import: pluginImport,
+      'import/parsers': tsParser,
+      'unused-imports': pluginUnusedImports,
+      unicorn: pluginUnicorn,
     },
     rules: {
       ...pluginImport.configs.typescript.rules,
@@ -88,7 +79,7 @@ export default [
     },
   },
   {
-    files: testFiles,
+    files: ['packages/**/*.{spec,test}.ts'],
     plugins: {
       jest: pluginJest,
     },

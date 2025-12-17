@@ -1,5 +1,3 @@
-import { normalizeEmail } from '@codylabs/helper-fns';
-import { Transform } from 'class-transformer';
 import { IsBase64, IsEmail, IsNumberString, IsString, IsUrl, Matches } from 'class-validator';
 
 import { StringFieldOptions } from '../interfaces';
@@ -8,20 +6,21 @@ import { MinMaxLength } from './min-max-length.decorator';
 import { Trim } from './transform.decorator';
 
 export const IsStringField = (stringFieldOptions?: StringFieldOptions) => {
-  const options: StringFieldOptions = {
+  const options = {
     required: true,
     numberString: false,
     base64: false,
     url: false,
-    email: false,
     each: false,
+    sanitize: false,
     trim: false,
+    email: false,
     minLength: 1,
     maxLength: Number.MAX_SAFE_INTEGER,
     arrayMinSize: 0,
     arrayMaxSize: Number.MAX_SAFE_INTEGER,
     ...stringFieldOptions,
-  };
+  } satisfies StringFieldOptions;
 
   const decoratorsToApply = [];
 
@@ -57,10 +56,6 @@ export const IsStringField = (stringFieldOptions?: StringFieldOptions) => {
     );
   } else if (options.email) {
     decoratorsToApply.push(
-      Transform(({ value }: { value: string }) => value.toLowerCase(), { toClassOnly: true }),
-      Transform(({ value }): string => (typeof value === 'string' ? normalizeEmail(value) : value), {
-        toClassOnly: true,
-      }),
       IsEmail(
         {},
         {

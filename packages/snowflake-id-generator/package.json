@@ -1,6 +1,6 @@
 {
   "name": "@codylabs/snowflake-id-generator",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "description": "A Snowflake ID generator for unique identifier creation.",
   "author": "Cody Nguyen",
   "main": "./dist/index.js",
@@ -18,8 +18,8 @@
   },
   "devDependencies": {
     "@codylabs/typescript-configs": "workspace:*",
-    "tsup": "^6.0.0",
-    "typescript": "^5.7.3"
+    "tsup": "^8.5.1",
+    "typescript": "^5.9.3"
   },
   "publishConfig": {
     "access": "public"

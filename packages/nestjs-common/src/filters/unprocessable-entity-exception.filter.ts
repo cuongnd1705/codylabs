@@ -1,8 +1,10 @@
 import { isEmpty, snake } from '@codylabs/helper-fns';
-import { ArgumentsHost, Catch, ExceptionFilter, UnprocessableEntityException } from '@nestjs/common';
+import { ArgumentsHost, Catch, ExceptionFilter, HttpStatus, UnprocessableEntityException } from '@nestjs/common';
 import { HttpArgumentsHost } from '@nestjs/common/interfaces';
 import { ValidationError } from 'class-validator';
 import { Response } from 'express';
+
+import { ErrorResponse } from '../interfaces';
 
 @Catch(UnprocessableEntityException)
 export class UnprocessableEntityExceptionFilter implements ExceptionFilter<UnprocessableEntityException> {
@@ -15,7 +17,14 @@ export class UnprocessableEntityExceptionFilter implements ExceptionFilter<Unpro
 
     this.processValidationErrors(validationErrors);
 
-    response.status(statusCode).json(r);
+    response.status(statusCode).json({
+      error: {
+        code: statusCode,
+        status: HttpStatus[statusCode],
+        message: 'Validation failed',
+        details: r.message,
+      } satisfies ErrorResponse,
+    });
   }
 
   private processValidationErrors(validationErrors: ValidationError[]): void {

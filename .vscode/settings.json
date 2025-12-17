@@ -8,9 +8,13 @@
     "source.organizeImports": "never",
     "source.fixAll.eslint": "explicit"
   },
-  "javascript.suggest.autoImports": true,
+  "eslint.format.enable": true,
+  "eslint.validate": [
+    "typescript"
+  ],
   "typescript.suggest.autoImports": true,
-  "javascript.updateImportsOnFileMove.enabled": "always",
+  "typescript.tsdk": "node_modules/typescript/lib",
+  "typescript.referencesCodeLens.enabled": true,
   "typescript.updateImportsOnFileMove.enabled": "always",
   "search.exclude": {
     "**/node_modules": true,
@@ -18,12 +22,20 @@
     "**/dist": true,
     "**/coverage": true
   },
-  "typescript.referencesCodeLens.enabled": true,
-  "typescript.tsdk": "node_modules/typescript/lib",
-  "[javascript]": {
-    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  "explorer.fileNesting.enabled": true,
+  "explorer.fileNesting.expand": false,
+  "explorer.fileNesting.patterns": {
+    "*.ts": "${capture].js, ${capture}.*.ts",
+    "*.js": "${capture}.js.map, ${capture}.min.js, ${capture}.d.ts",
+    "tsconfig.json": "tsconfig.*.json",
+    "nest-cli.json": "nest-cli.*.json, jest.config.ts, .swcrc",
+    "package.json": "package-lock.json, webpack-*.config.js, testSetup.ts, testTearDown.ts, pnpm-lock.yaml, pnpm-workspace.yaml",
+    "eslint.config.mjs": "prettier.config.mjs, sonar-project.properties, .commitlintrc.json, .editorconfig",
+    "Dockerfile": "docker-compose.yml, docker-compose.*.yml, .dockerignore",
+    "README.md": "CHANGELOG.md, CONTRIBUTING.md, LICENSE",
   },
-  "[typescript]": {
-    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  "material-icon-theme.activeIconPack": "nest",
+  "[snippets]": {
+    "editor.defaultFormatter": "vscode.json-language-features"
   },
 }

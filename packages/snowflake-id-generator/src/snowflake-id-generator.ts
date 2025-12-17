@@ -1,12 +1,5 @@
-export type Snowflake = bigint | number;
-
-export interface SnowflakeIdGeneratorOptions {
-  epoch?: Snowflake;
-  workerIdBits?: Snowflake;
-  datacenterIdBits?: Snowflake;
-  sequence?: Snowflake;
-  sequenceBits?: Snowflake;
-}
+import { SnowflakeIdGeneratorOptions } from './interfaces';
+import { Snowflake } from './types';
 
 export class SnowflakeIdGenerator {
   #epoch: bigint;
@@ -25,10 +18,8 @@ export class SnowflakeIdGenerator {
   #lastTimestamp = -1n;
 
   constructor(workerId: Snowflake = 0n, datacenterId: Snowflake = 0n, options?: SnowflakeIdGeneratorOptions) {
-    // Epoch
     this.#epoch = BigInt(options?.epoch ?? 1609459200000);
 
-    // Worker
     this.#workerId = BigInt(workerId);
     this.#workerIdBits = BigInt(options?.workerIdBits ?? 5);
     this.#maxWorkerId = -1n ^ (-1n << this.#workerIdBits);
@@ -39,7 +30,6 @@ export class SnowflakeIdGenerator {
       );
     }
 
-    // Datacenter
     this.#datacenterId = BigInt(datacenterId);
     this.#datacenterIdBits = BigInt(options?.datacenterIdBits ?? 5);
     this.#maxDatacenterId = -1n ^ (-1n << this.#datacenterIdBits);
@@ -50,12 +40,10 @@ export class SnowflakeIdGenerator {
       );
     }
 
-    // Sequence
     this.#sequence = BigInt(options?.sequence ?? 0);
     this.#sequenceBits = BigInt(options?.sequenceBits ?? 12);
     this.#sequenceMask = -1n ^ (-1n << this.#sequenceBits);
 
-    // Shift
     this.#workerIdShift = this.#sequenceBits;
     this.#datacenterIdShift = this.#sequenceBits + this.#workerIdBits;
     this.#timestampLeftShift = this.#sequenceBits + this.#workerIdBits + this.#datacenterIdBits;

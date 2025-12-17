@@ -5,13 +5,13 @@ import { applyCommonDecorators } from '../utils';
 import { ToBoolean } from './transform.decorator';
 
 export const IsBooleanField = (booleanFieldOptions?: BooleanFieldOptions) => {
-  const options: BooleanFieldOptions = {
+  const options = {
     each: false,
     required: true,
     arrayMinSize: 0,
     arrayMaxSize: Number.MAX_SAFE_INTEGER,
     ...booleanFieldOptions,
-  };
+  } satisfies BooleanFieldOptions;
 
   const decoratorsToApply = [
     IsBoolean({

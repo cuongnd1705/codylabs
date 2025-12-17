@@ -5,17 +5,17 @@ import { NumberFieldOptions } from '../interfaces';
 import { applyCommonDecorators } from '../utils';
 
 export const IsNumberField = (numberFieldOptions?: NumberFieldOptions) => {
-  const options: NumberFieldOptions = {
-    min: 1,
+  const options = {
+    min: 0,
     required: true,
     each: false,
     max: Number.MAX_SAFE_INTEGER,
     arrayMinSize: 0,
     arrayMaxSize: Number.MAX_SAFE_INTEGER,
-    int: true,
-    positive: true,
+    int: false,
+    positive: false,
     ...numberFieldOptions,
-  };
+  } satisfies NumberFieldOptions;
 
   const decoratorsToApply = [
     Type(() => Number),

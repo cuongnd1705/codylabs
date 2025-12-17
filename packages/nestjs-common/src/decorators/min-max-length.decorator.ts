@@ -9,7 +9,7 @@ export const MinMaxLength = (minMaxLengthOptions?: MinMaxLengthOptions) => {
     maxLength: 500,
     each: false,
     ...minMaxLengthOptions,
-  };
+  } satisfies MinMaxLengthOptions;
 
   const decoratorsToApply = [
     MinLength(options.minLength, {

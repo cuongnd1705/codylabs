@@ -125,6 +125,20 @@ export const title = (str: string | null | undefined): string => {
 };
 
 /**
+ * Formats the given string in kebab case fashion
+ *
+ * @param {string} str - The string to format.
+ * @returns {string} - The constant cased string.
+ */
+export const constant = (str: string): string => {
+  if (!str) {
+    return '';
+  }
+
+  return snake(str).toUpperCase();
+};
+
+/**
  * Replaces placeholders with data in template strings.
  * The default expression looks for {{name}} to identify names.
  *

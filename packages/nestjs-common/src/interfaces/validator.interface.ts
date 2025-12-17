@@ -27,10 +27,12 @@ export interface StringFieldOptions extends BaseValidator, BaseArrayValidator {
   regex?: RegExp;
   minLength?: number;
   maxLength?: number;
+  sanitize?: boolean;
   numberString?: boolean;
   base64?: boolean;
   url?: boolean;
   email?: boolean;
+  case?: 'upper' | 'lower' | 'constant' | 'camel' | 'kebab' | 'pascal' | 'snake' | 'title';
 }
 
 export interface MinMaxLengthOptions extends Pick<StringFieldOptions, 'each' | 'minLength' | 'maxLength'> {}
@@ -40,3 +42,5 @@ export interface EnumFieldOptions extends BaseValidator, BaseArrayValidator {}
 export interface BooleanFieldOptions extends BaseValidator, BaseArrayValidator {}
 
 export interface NestedFieldOptions extends BaseValidator, BaseArrayValidator {}
+
+export interface ObjectFieldOptions extends BaseValidator, BaseArrayValidator {}

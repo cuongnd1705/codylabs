@@ -1,6 +1,6 @@
 {
   "name": "@codylabs/nestjs-common",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "description": "Common utilities for NestJS applications",
   "license": "MIT",
   "author": "Cody Nguyen",
@@ -19,13 +19,13 @@
   "devDependencies": {
     "@codylabs/helper-fns": "workspace:*",
     "@codylabs/typescript-configs": "workspace:*",
-    "@nestjs/platform-express": "^10.4.8",
-    "@types/express": "^5.0.0",
+    "@nestjs/platform-express": "^11.1.9",
+    "@types/express": "^5.0.6",
     "class-transformer": "^0.5.1",
-    "class-validator": "^0.14.1",
-    "express": "^4.21.1",
+    "class-validator": "^0.14.3",
+    "express": "^5.2.1",
     "reflect-metadata": "^0.2.2",
-    "rxjs": "^7.8.1"
+    "rxjs": "^7.8.2"
   },
   "peerDependencies": {
     "@nestjs/common": "^10.0.0 || ^11.0.0",

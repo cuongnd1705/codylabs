@@ -1,6 +1,6 @@
 {
   "name": "@codylabs/helper-fns",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "description": "Functional TypeScript utility library - modern, simple, typed, powerful",
   "license": "MIT",
   "author": "Cody Nguyen",
@@ -19,8 +19,8 @@
   },
   "devDependencies": {
     "@codylabs/typescript-configs": "workspace:*",
-    "typescript": "^5.7.3",
-    "tsup": "^6.0.0"
+    "tsup": "^8.5.1",
+    "typescript": "^5.9.3"
   },
   "publishConfig": {
     "access": "public"

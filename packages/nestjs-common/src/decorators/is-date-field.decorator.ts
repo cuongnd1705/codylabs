@@ -4,7 +4,7 @@ import { DateFieldOptions } from '../interfaces';
 import { applyCommonDecorators } from '../utils';
 
 export const IsDateField = (dateFieldOptions?: DateFieldOptions) => {
-  const options: DateFieldOptions = {
+  const options = {
     each: false,
     required: true,
     arrayMinSize: 0,
@@ -12,7 +12,7 @@ export const IsDateField = (dateFieldOptions?: DateFieldOptions) => {
     lessThan: false,
     greaterThan: false,
     ...dateFieldOptions,
-  };
+  } satisfies DateFieldOptions;
 
   const decoratorsToApply = [
     IsDateString(

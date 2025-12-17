@@ -18,7 +18,7 @@
   },
   "devDependencies": {
     "@codylabs/typescript-configs": "workspace:*",
-    "@nestjs/throttler": "^6.2.1",
+    "@nestjs/throttler": "^6.5.0",
     "reflect-metadata": "^0.2.2"
   },
   "peerDependencies": {
