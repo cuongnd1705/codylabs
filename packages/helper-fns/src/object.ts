@@ -126,3 +126,8 @@ export const omit = <T, TKeys extends keyof T>(obj: T, keys: TKeys[]): Omit<T, T
 
   return Object.fromEntries(Object.entries(obj).filter(([key]) => !keySet.has(key as TKeys))) as Omit<T, TKeys>;
 };
+
+export const enumToString = <T extends Record<string, string>>(enumObj: T): string =>
+  Object.keys(enumObj)
+    .map((key) => enumObj[key])
+    .join(',');

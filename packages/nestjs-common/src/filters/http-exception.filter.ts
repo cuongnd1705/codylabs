@@ -17,7 +17,7 @@ export class HttpExceptionFilter implements ExceptionFilter {
       code: status,
       status: HttpStatus[status],
       message,
-      ...(isDev ? { details: exception.stack } : {}),
+      ...(isDev() ? { details: exception.stack } : {}),
     };
 
     response.status(status).json({
