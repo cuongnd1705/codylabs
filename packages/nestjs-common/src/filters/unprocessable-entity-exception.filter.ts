@@ -5,6 +5,7 @@ import { ValidationError } from 'class-validator';
 import { Response } from 'express';
 
 import { ErrorResponse } from '../interfaces';
+import { isDevelopment } from '../utils';
 
 @Catch(UnprocessableEntityException)
 export class UnprocessableEntityExceptionFilter implements ExceptionFilter<UnprocessableEntityException> {
@@ -12,37 +13,51 @@ export class UnprocessableEntityExceptionFilter implements ExceptionFilter<Unpro
     const ctx: HttpArgumentsHost = host.switchToHttp();
     const response: Response = ctx.getResponse<Response>();
     const statusCode: number = exception.getStatus();
-    const r = exception.getResponse() as { message: ValidationError[] };
-    const validationErrors: ValidationError[] = r.message;
+    const exceptionResponse = exception.getResponse() as { message: ValidationError[] };
+    const validationErrors: ValidationError[] = exceptionResponse.message;
 
-    this.processValidationErrors(validationErrors);
+    const processedErrors = this.processValidationErrors(validationErrors);
 
     response.status(statusCode).json({
       error: {
         code: statusCode,
         status: HttpStatus[statusCode],
         message: 'Validation failed',
-        details: r.message,
+        ...(isDevelopment() ? { details: processedErrors } : {}),
       } satisfies ErrorResponse,
     });
   }
 
-  private processValidationErrors(validationErrors: ValidationError[]): void {
-    for (const validationError of validationErrors) {
-      if (validationError.children && !isEmpty(validationError.children)) {
-        this.processValidationErrors(validationError.children);
-      }
+  private processValidationErrors(validationErrors: ValidationError[]): ValidationError[] {
+    return validationErrors.map((error) => this.cleanValidationError(error));
+  }
 
-      validationError.target = undefined;
-      validationError.children = undefined;
+  private cleanValidationError(validationError: ValidationError): ValidationError {
+    const cleanedError: ValidationError = {
+      ...validationError,
+      target: undefined,
+      children:
+        validationError.children && !isEmpty(validationError.children)
+          ? this.processValidationErrors(validationError.children)
+          : undefined,
+      constraints: this.processConstraints(validationError.constraints),
+    };
 
-      if (validationError.constraints) {
-        for (const [constraintKey, constraint] of Object.entries(validationError.constraints)) {
-          if (!constraint) {
-            validationError.constraints[constraintKey] = `error.fields.${snake(constraintKey)}`;
-          }
-        }
-      }
+    return cleanedError;
+  }
+
+  private processConstraints(constraints: Record<string, string> | undefined): Record<string, string> | undefined {
+    if (!constraints) {
+      return undefined;
     }
+
+    return Object.entries(constraints).reduce(
+      (acc, [key, value]) => {
+        acc[key] = value || `error.fields.${snake(key)}`;
+
+        return acc;
+      },
+      {} as Record<string, string>,
+    );
   }
 }

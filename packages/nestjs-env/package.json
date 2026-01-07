@@ -1,6 +1,6 @@
 {
   "name": "@codylabs/nestjs-env",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "Environment variable module for NestJS",
   "license": "MIT",
   "author": "Cody Nguyen",
@@ -16,18 +16,20 @@
     "test": "jest --passWithNoTests",
     "test:watch": "jest --watch"
   },
+  "dependencies": {
+    "destr": "^2.0.5",
+    "glob": "^13.0.0"
+  },
   "devDependencies": {
     "@codylabs/helper-fns": "workspace:*",
     "@codylabs/typescript-configs": "workspace:*",
     "@nestjs/config": "^4.0.2",
-    "@nestjs/platform-express": "^11.1.10",
+    "@nestjs/platform-express": "^11.1.11",
     "@types/express": "^5.0.6",
     "@types/node": "^25.0.3",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.3",
-    "destr": "^2.0.5",
     "express": "^5.2.1",
-    "glob": "^13.0.0",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.2"
   },

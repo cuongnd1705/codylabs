@@ -1,9 +1,11 @@
-const checkEnv = (env: string): boolean => process.env.NODE_ENV?.startsWith(env) ?? false;
+import { AppEnv } from '../enums';
 
-export const isDev = (): boolean => checkEnv('dev');
+const checkEnv = (env: AppEnv): boolean => process.env.NODE_ENV?.toLowerCase() === env;
 
-export const isQa = (): boolean => checkEnv('qa');
+export const isLocal = (): boolean => checkEnv(AppEnv.Local);
 
-export const isUat = (): boolean => checkEnv('uat');
+export const isDevelopment = (): boolean => checkEnv(AppEnv.Development);
 
-export const isProd = (): boolean => checkEnv('prod');
+export const isStaging = (): boolean => checkEnv(AppEnv.Staging);
+
+export const isProduction = (): boolean => checkEnv(AppEnv.Production);
