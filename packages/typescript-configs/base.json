@@ -42,8 +42,6 @@
     "incremental": true,
     "skipLibCheck": true,
 
-    "pretty": true,
-
-    "ignoreDeprecations": "6.0"
+    "pretty": true
   }
 }

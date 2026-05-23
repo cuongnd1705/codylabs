@@ -1,4 +1,4 @@
-import { camel, capitalize, kebab, normalizeEmail, pascal, snake, template, title, trim } from '../src';
+import { camel, capitalize, kebab, normalizeEmail, pascal, snake, template, title, trim } from './string';
 
 describe('string module', () => {
   describe('capitalize function', () => {

@@ -1,4 +1,4 @@
-import { clone, lowerize, mapEntries, mapKeys, mapValues, omit, pick, shake, upperize } from '../src';
+import { clone, lowerize, mapEntries, mapKeys, mapValues, omit, pick, shake, upperize } from './object';
 
 const NULL = null as unknown as {};
 

@@ -7,8 +7,19 @@
       "outputs": ["dist/**"],
       "cache": true
     },
-    "//#lint:check": {},
+    "//#quality": {
+      "dependsOn": ["//#lint", "//#format"]
+    },
+    "//#quality:fix": {
+      "dependsOn": ["//#lint:fix", "//#format:fix"]
+    },
+    "//#lint": {},
     "//#lint:fix": {
+      "cache": false
+    },
+    "//#format": {},
+    "//#format:fix": {
+      "dependsOn": ["//#lint:fix"],
       "cache": false
     },
     "dev": {
