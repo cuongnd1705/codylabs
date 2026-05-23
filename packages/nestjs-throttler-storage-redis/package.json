@@ -1,6 +1,6 @@
 {
   "name": "@codylabs/nestjs-throttler-storage-redis",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "description": "Redis (using node-redis) storage provider for the @nestjs/throttler package",
   "license": "MIT",
   "author": "Cody Nguyen",

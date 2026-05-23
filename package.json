@@ -23,7 +23,7 @@
     "lint": "oxlint",
     "lint:fix": "oxlint --fix",
     "prepare": "husky",
-    "publish-packages": "turbo run build lint:check && changeset version && changeset publish",
+    "publish-packages": "turbo run build quality && changeset version && changeset publish",
     "test": "turbo test"
   },
   "devDependencies": {
