@@ -25,7 +25,7 @@ import { ThrottlerStorageRedisService } from '@codylabs/nestjs-throttler-storage
   imports: [
     ThrottlerModule.forRoot({
       throttlers: [{ limit: 5, ttl: seconds(60) }],
-      storage: new ThrottlerStorageRedisService('redis://localhost:6379')
+      storage: new ThrottlerStorageRedisService('redis://localhost:6379'),
     }),
   ],
 })
@@ -50,7 +50,7 @@ import { ThrottlerStorageRedisService } from '@codylabs/nestjs-throttler-storage
             limit: config.get('THROTTLE_LIMIT'),
           },
         ],
-        storage: new ThrottlerStorageRedisService('redis://localhost:6379')
+        storage: new ThrottlerStorageRedisService('redis://localhost:6379'),
       }),
     }),
   ],

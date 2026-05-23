@@ -1,10 +1,7 @@
 {
   "extends": "./tsconfig.json",
-  "exclude": [
-    "node_modules",
-    "dist",
-    "test/**/*",
-    "*.spec.ts",
-    "jest.config.ts"
-  ]
+  "compilerOptions": {
+    "tsBuildInfoFile": "./dist/tsconfig.build.tsbuildinfo"
+  },
+  "exclude": ["node_modules", "dist", "test/**/*", "*.spec.ts", "jest.config.ts"]
 }

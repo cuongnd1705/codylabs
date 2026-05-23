@@ -25,7 +25,7 @@ export const camel = (str: string): string => {
 
   const parts = str
     .replace(/([A-Z])+/g, capitalize)
-    .split(/(?=[A-Z])|[\.\-\s_]/)
+    .split(/(?=[A-Z])|[.\-\s_]/)
     .map((x, index) => (index === 0 ? x.toLowerCase() : capitalize(x)));
 
   return parts.join('');
@@ -48,7 +48,7 @@ export const snake = (
   const parts =
     str
       ?.replace(/([A-Z])+/g, capitalize)
-      .split(/(?=[A-Z])|[\.\-\s_]/)
+      .split(/(?=[A-Z])|[.\-\s_]/)
       .map((x) => x.toLowerCase()) ?? [];
 
   if (parts.length === 0) {
@@ -76,7 +76,7 @@ export const kebab = (str: string): string => {
   const parts =
     str
       ?.replace(/([A-Z])+/g, capitalize)
-      ?.split(/(?=[A-Z])|[\.\-\s_]/)
+      ?.split(/(?=[A-Z])|[.\-\s_]/)
       .map((x) => x.toLowerCase()) ?? [];
 
   if (parts.length === 0) {
@@ -97,7 +97,7 @@ export const kebab = (str: string): string => {
  * @returns {string} - The pascal cased string.
  */
 export const pascal = (str: string): string => {
-  const parts = str?.split(/[\.\-\s_]/).map((x) => x.toLowerCase()) ?? [];
+  const parts = str?.split(/[.\-\s_]/).map((x) => x.toLowerCase()) ?? [];
 
   if (parts.length === 0) {
     return '';
@@ -118,7 +118,7 @@ export const title = (str: string | null | undefined): string => {
   }
 
   return str
-    .split(/[\.\-\s_]+/)
+    .split(/[.\-\s_]+/)
     .filter((s) => !!s)
     .map((s) => capitalize(s.toLowerCase()))
     .join(' ');

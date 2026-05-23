@@ -14,8 +14,8 @@
     "noImplicitReturns": true,
     "exactOptionalPropertyTypes": false,
 
-    "module": "ESNext",
-    "moduleResolution": "Bundler",
+    "module": "esnext",
+    "moduleResolution": "bundler",
     "resolveJsonModule": true,
     "moduleDetection": "force",
 
@@ -34,7 +34,7 @@
     "forceConsistentCasingInFileNames": true,
     "isolatedModules": true,
 
-    "target": "ES2022",
+    "target": "es2022",
     "useDefineForClassFields": true,
     "experimentalDecorators": true,
     "emitDecoratorMetadata": true,
@@ -42,6 +42,8 @@
     "incremental": true,
     "skipLibCheck": true,
 
-    "pretty": true
+    "pretty": true,
+
+    "ignoreDeprecations": "6.0"
   }
 }

@@ -1,0 +1,54 @@
+{
+  "$schema": "./node_modules/oxlint/configuration_schema.json",
+  "plugins": ["typescript", "unicorn", "import", "node", "promise", "oxc"],
+  "categories": {
+    "correctness": "error",
+    "suspicious": "warn"
+  },
+  "env": {
+    "builtin": true,
+    "es2026": true,
+    "node": true
+  },
+  "ignorePatterns": [
+    ".github/*",
+    ".husky/*",
+    "coverage/*",
+    "dist/*",
+    "docs/*",
+    "node_modules/*",
+    "logs/*",
+    "ecosystem.config.js"
+  ],
+  "rules": {
+    "import/no-duplicates": "warn",
+    "import/no-unassigned-import": [
+      "warn",
+      {
+        "allow": ["dotenv/config"]
+      }
+    ],
+    "typescript/no-extraneous-class": [
+      "warn",
+      {
+        "allowWithDecorator": true
+      }
+    ]
+  },
+  "overrides": [
+    {
+      "files": ["{src,test}/**/*.{spec,test}.ts"],
+      "plugins": ["jest"],
+      "env": {
+        "jest": true
+      },
+      "rules": {
+        "jest/no-disabled-tests": "warn",
+        "jest/no-focused-tests": "error",
+        "jest/no-identical-title": "error",
+        "jest/prefer-to-have-length": "warn",
+        "jest/valid-expect": "error"
+      }
+    }
+  ]
+}

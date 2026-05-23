@@ -72,7 +72,7 @@ export class AppModule {}
 You can inject the `RedisService` to interact with Redis.
 
 ```ts
-import { RedisClientConnectionType, RedisService } from "@codylabs/nestjs-redis";
+import { RedisClientConnectionType, RedisService } from '@codylabs/nestjs-redis';
 import { Injectable } from '@nestjs/common';
 
 @Injectable()

@@ -1,12 +1,11 @@
-import fs from 'node:fs';
-import path from 'node:path';
-
 import { DynamicModule, Global, Logger, Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { ClassConstructor, plainToClass } from 'class-transformer';
 import { validateSync, ValidationError } from 'class-validator';
 import destr from 'destr';
 import { glob } from 'glob';
+import fs from 'node:fs';
+import path from 'node:path';
 
 import { ConfigurableModuleClass, OPTIONS_TYPE } from './env.module-definition';
 import { LoadConfigOptions } from './interfaces';
@@ -135,7 +134,7 @@ export class EnvModule extends ConfigurableModuleClass {
 
       return parsed as Record<string, unknown>;
     } catch (error: any) {
-      throw new Error(`Failed to read config file ${filePath}: ${error.message}`);
+      throw new Error(`Failed to read config file ${filePath}: ${error.message}`, { cause: error });
     }
   }
 

@@ -1,2 +1,6 @@
 packages:
-  - "packages/*"
+  - 'packages/*'
+allowBuilds:
+  '@nestjs/core': true
+  esbuild: true
+  unrs-resolver: false

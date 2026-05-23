@@ -115,7 +115,7 @@ export class EnvService<T extends Record<string, any> = Record<string, any>> {
     } catch (error: any) {
       this.logger.error(`Failed to parse configuration value at path: ${path}`, error.stack);
 
-      throw new Error(`Configuration parsing failed for ${path}: ${error.message}`);
+      throw new Error(`Configuration parsing failed for ${path}: ${error.message}`, { cause: error });
     }
   }
 

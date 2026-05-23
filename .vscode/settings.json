@@ -1,21 +1,35 @@
 {
+  "eslint.enable": false,
+  "prettier.enable": false,
   "editor.tabSize": 2,
   "editor.detectIndentation": false,
-  "editor.defaultFormatter": "esbenp.prettier-vscode",
+  "editor.defaultFormatter": "oxc.oxc-vscode",
   "editor.formatOnSave": true,
+  "editor.formatOnSaveMode": "file",
+  "[javascript]": {
+    "editor.defaultFormatter": "oxc.oxc-vscode",
+    "editor.formatOnSave": true
+  },
+  "[typescript]": {
+    "editor.defaultFormatter": "oxc.oxc-vscode",
+    "editor.formatOnSave": true
+  },
+  "[json]": {
+    "editor.defaultFormatter": "oxc.oxc-vscode",
+    "editor.formatOnSave": true
+  },
+  "[jsonc]": {
+    "editor.defaultFormatter": "oxc.oxc-vscode",
+    "editor.formatOnSave": true
+  },
   "editor.codeActionsOnSave": {
     "source.fixAll": "never",
     "source.organizeImports": "never",
-    "source.fixAll.eslint": "explicit"
+    "source.fixAll.oxc": "always"
   },
-  "eslint.format.enable": true,
-  "eslint.validate": [
-    "typescript"
-  ],
-  "typescript.suggest.autoImports": true,
-  "typescript.tsdk": "node_modules/typescript/lib",
-  "typescript.referencesCodeLens.enabled": true,
-  "typescript.updateImportsOnFileMove.enabled": "always",
+  "js/ts.suggest.autoImports": true,
+  "js/ts.updateImportsOnFileMove.enabled": "always",
+  "js/ts.referencesCodeLens.enabled": true,
   "search.exclude": {
     "**/node_modules": true,
     "**/bower_components": true,
@@ -28,14 +42,9 @@
     "*.ts": "${capture].js, ${capture}.*.ts",
     "*.js": "${capture}.js.map, ${capture}.min.js, ${capture}.d.ts",
     "tsconfig.json": "tsconfig.*.json",
-    "nest-cli.json": "nest-cli.*.json, jest.config.ts, .swcrc",
-    "package.json": "package-lock.json, webpack-*.config.js, testSetup.ts, testTearDown.ts, pnpm-lock.yaml, pnpm-workspace.yaml",
-    "eslint.config.mjs": "prettier.config.mjs, sonar-project.properties, .commitlintrc.json, .editorconfig",
+    "package.json": "package-lock.json, pnpm-lock.yaml, pnpm-workspace.yaml",
     "Dockerfile": "docker-compose.yml, docker-compose.*.yml, .dockerignore",
-    "README.md": "CHANGELOG.md, CONTRIBUTING.md, LICENSE",
+    "README.md": "CHANGELOG.md, CONTRIBUTING.md, LICENSE"
   },
-  "material-icon-theme.activeIconPack": "nest",
-  "[snippets]": {
-    "editor.defaultFormatter": "vscode.json-language-features"
-  },
+  "material-icon-theme.activeIconPack": "nest"
 }

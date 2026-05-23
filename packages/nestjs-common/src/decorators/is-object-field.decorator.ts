@@ -1,6 +1,7 @@
 import { IsObject } from 'class-validator';
 
 import type { ObjectFieldOptions } from '../interfaces';
+
 import { applyCommonDecorators } from '../utils';
 
 export const IsObjectField = (objectFieldOptions?: ObjectFieldOptions) => {

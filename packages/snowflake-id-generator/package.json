@@ -3,25 +3,25 @@
   "version": "0.0.4",
   "description": "A Snowflake ID generator for unique identifier creation.",
   "author": "Cody Nguyen",
-  "main": "./dist/index.js",
-  "module": "./dist/index.mjs",
-  "types": "./dist/index.d.ts",
   "files": [
     "dist/**"
   ],
+  "main": "./dist/index.js",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.ts",
+  "publishConfig": {
+    "access": "public"
+  },
   "scripts": {
-    "prebuild": "rimraf dist",
     "build": "tsup src/index.ts --format cjs,esm --dts",
     "clean": "rm -rf .turbo node_modules dist",
+    "prebuild": "rimraf dist",
     "test": "jest --passWithNoTests",
     "test:watch": "jest --watch"
   },
   "devDependencies": {
     "@codylabs/typescript-configs": "workspace:*",
     "tsup": "^8.5.1",
-    "typescript": "^5.9.3"
-  },
-  "publishConfig": {
-    "access": "public"
+    "typescript": "^6.0.3"
   }
 }

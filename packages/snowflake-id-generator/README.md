@@ -43,10 +43,10 @@ console.log(id.toString()); // Example: "1234567890123456789"
 ```ts
 const generator = new SnowflakeIdGenerator(1n, 1n, {
   epoch: 1609459200000n, // Custom epoch (default: 2021-01-01)
-  workerIdBits: 5n,      // Bits allocated for worker ID
-  datacenterIdBits: 5n,  // Bits allocated for datacenter ID
-  sequenceBits: 12n,     // Bits allocated for sequence
-  sequence: 0n           // Starting sequence number
+  workerIdBits: 5n, // Bits allocated for worker ID
+  datacenterIdBits: 5n, // Bits allocated for datacenter ID
+  sequenceBits: 12n, // Bits allocated for sequence
+  sequence: 0n, // Starting sequence number
 });
 ```
 
@@ -68,11 +68,11 @@ constructor(
 
 ```ts
 interface SnowflakeIdGeneratorOptions {
-  epoch?: Snowflake;           // Custom epoch timestamp
-  workerIdBits?: Snowflake;    // Number of bits for worker ID
+  epoch?: Snowflake; // Custom epoch timestamp
+  workerIdBits?: Snowflake; // Number of bits for worker ID
   datacenterIdBits?: Snowflake; // Number of bits for datacenter ID
-  sequence?: Snowflake;         // Starting sequence number
-  sequenceBits?: Snowflake;     // Number of bits for sequence
+  sequence?: Snowflake; // Starting sequence number
+  sequenceBits?: Snowflake; // Number of bits for sequence
 }
 ```
 
@@ -87,7 +87,6 @@ interface SnowflakeIdGeneratorOptions {
 - `datacenterId: bigint` - Gets the current datacenter ID
 - `currentSequence: bigint` - Gets the current sequence number
 - `lastTimestamp: bigint` - Gets the last timestamp used
-
 
 ### ID Structure
 
