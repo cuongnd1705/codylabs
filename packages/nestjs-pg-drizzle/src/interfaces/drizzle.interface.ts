@@ -1,3 +1,5 @@
+import type { PgTable } from 'drizzle-orm/pg-core';
+
 import {
   BuildQueryResult,
   type AnyColumn,
@@ -6,6 +8,7 @@ import {
   type DrizzleTypeError,
   type Equal,
   type GetColumnData,
+  type InferSelectModel,
   type KnownKeysOnly,
   type SQL,
   type TablesRelationalConfig,
@@ -150,3 +153,8 @@ export type SelectResultField<T, TDeep extends boolean = true> =
 export type SelectResultFields<TSelectedFields, TDeep extends boolean = true> = SimplifyShallow<{
   [Key in keyof TSelectedFields & string]: SelectResultField<TSelectedFields[Key], TDeep>;
 }>;
+
+export type NumericKeys<U extends PgTable<any>> = {
+  [K in keyof InferSelectModel<U>]: InferSelectModel<U>[K] extends number | bigint | null ? K : never;
+}[keyof InferSelectModel<U>] &
+  string;

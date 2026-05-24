@@ -26,6 +26,7 @@ import {
   FindFirstQueryConfig,
   FindManyOpts,
   FindManyQueryConfig,
+  NumericKeys,
   OrderByField,
   PaginateByCursorOpts,
   PaginateByCursorQueryConfig,
@@ -59,6 +60,10 @@ export abstract class BaseRepository<
 
   get alias() {
     return this.tableName;
+  }
+
+  async withTransaction<T>(fn: (tx: Transaction<TRel>) => Promise<T>): Promise<T> {
+    return this.db.transaction((tx) => fn(tx as Transaction<TRel>));
   }
 
   private hasSoftDelete() {
@@ -111,7 +116,11 @@ export abstract class BaseRepository<
 
   /** Decodes a base64 cursor string back to its original value object. */
   private decodeCursor(token: string): Record<string, unknown> {
-    return JSON.parse(Buffer.from(token, 'base64').toString('utf8'));
+    try {
+      return JSON.parse(Buffer.from(token, 'base64').toString('utf8'));
+    } catch {
+      throw new BadRequestException('Invalid page token');
+    }
   }
 
   /**
@@ -362,15 +371,11 @@ export abstract class BaseRepository<
   ) {
     const qb: any = (opts?.tx || this.db).insert(this.table).values(
       await Promise.all(
-        values
-          .map((value) => {
-            return async () => {
-              await this.beforeInsert(value);
+        values.map(async (value) => {
+          await this.beforeInsert(value);
 
-              return value;
-            };
-          })
-          .map((v) => v()),
+          return value;
+        }),
       ),
     );
 
@@ -456,6 +461,10 @@ export abstract class BaseRepository<
     where?: QConfig['where'];
     tx?: Transaction;
   }) {
+    if (!this.hasSoftDelete()) {
+      throw new BadRequestException('Table does not support soft delete');
+    }
+
     let where;
 
     if (opts?.where) {
@@ -568,13 +577,7 @@ export abstract class BaseRepository<
       return [];
     }
 
-    await Promise.all(
-      rows
-        .map((row: any) => async () => {
-          return this.afterFind(row);
-        })
-        .map((v: () => Promise<void>) => v()),
-    );
+    await Promise.all(rows.map(async (row: any) => this.afterFind(row)));
 
     return rows as BuildQueryResult<TRel, TRel[V], QConfig>[];
   }
@@ -780,20 +783,24 @@ export abstract class BaseRepository<
    */
   async exists<QConfig extends FindManyQueryConfig<TRel, V>>(opts?: {
     where?: QConfig['where'];
+    showDeleted?: boolean;
     tx?: Transaction;
   }): Promise<boolean> {
+    const { tx, showDeleted, ...config } = opts || {};
+
+    const finalConfig = showDeleted ? config : this.withSoftDeleteFilter(config as any);
+
     let where;
 
-    if (opts?.where) {
-      where = relationsFilterToSQL(this.table, opts.where);
+    if (finalConfig.where) {
+      where = relationsFilterToSQL(this.table, finalConfig.where);
     }
 
-    const rows = await (opts?.tx || (this.db as any))
-      .select({ exists: sql<boolean>`EXISTS(SELECT 1 FROM ${this.table} WHERE ${where ?? sql`TRUE`})` })
-      .from(this.table)
-      .limit(1);
+    const result = await (tx || this.db).execute(
+      sql`SELECT EXISTS(SELECT 1 FROM ${this.table}${where ? sql` WHERE ${where}` : sql``}) AS "exists"`,
+    );
 
-    return rows[0]?.exists ?? false;
+    return Boolean((result.rows[0] as any)?.exists);
   }
 
   /**
@@ -806,12 +813,17 @@ export abstract class BaseRepository<
    */
   async count<QConfig extends FindManyQueryConfig<TRel, V>>(opts?: {
     where?: QConfig['where'];
+    showDeleted?: boolean;
     tx?: Transaction;
   }): Promise<number> {
+    const { showDeleted, ...config } = opts || {};
+
+    const finalConfig = showDeleted ? config : this.withSoftDeleteFilter(config as any);
+
     let where;
 
-    if (opts?.where) {
-      where = relationsFilterToSQL(this.table, opts.where);
+    if (finalConfig.where) {
+      where = relationsFilterToSQL(this.table, finalConfig.where);
     }
 
     const rows = await (opts?.tx || (this.db as any))
@@ -832,7 +844,7 @@ export abstract class BaseRepository<
    * @returns {Promise<number>}
    */
   async sum<QConfig extends FindManyQueryConfig<TRel, V>>(
-    column: keyof InferSelectModel<U> & string,
+    column: NumericKeys<U>,
     opts?: {
       where?: QConfig['where'];
       tx?: Transaction;
@@ -864,7 +876,7 @@ export abstract class BaseRepository<
    * @returns {Promise<number>}
    */
   async average<QConfig extends FindManyQueryConfig<TRel, V>>(
-    column: keyof InferSelectModel<U> & string,
+    column: NumericKeys<U>,
     opts?: {
       where?: QConfig['where'];
       tx?: Transaction;
@@ -896,7 +908,7 @@ export abstract class BaseRepository<
    * @returns {Promise<number | null>}
    */
   async minimum<QConfig extends FindManyQueryConfig<TRel, V>>(
-    column: keyof InferSelectModel<U> & string,
+    column: NumericKeys<U>,
     opts?: {
       where?: QConfig['where'];
       tx?: Transaction;
@@ -928,7 +940,7 @@ export abstract class BaseRepository<
    * @returns {Promise<number | null>}
    */
   async maximum<QConfig extends FindManyQueryConfig<TRel, V>>(
-    column: keyof InferSelectModel<U> & string,
+    column: NumericKeys<U>,
     opts?: {
       where?: QConfig['where'];
       tx?: Transaction;
@@ -982,10 +994,13 @@ export abstract class BaseRepository<
     };
     const qb = config.tx || this.db;
 
+    const countConfig = showDeleted
+      ? { where: config.where }
+      : this.withSoftDeleteFilter({ where: config.where } as any);
     let countWhere;
 
-    if (config.where) {
-      countWhere = relationsFilterToSQL(this.table, config.where);
+    if (countConfig.where) {
+      countWhere = relationsFilterToSQL(this.table, countConfig.where);
     }
 
     const parsed = this.parseOrderByString(orderBy ?? 'id');
