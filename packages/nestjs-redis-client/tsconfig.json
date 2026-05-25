@@ -1,0 +1,10 @@
+{
+  "extends": "@codylabs/typescript-configs/nestjs.json",
+  "compilerOptions": {
+    "outDir": "dist",
+    "rootDir": "./src",
+    "types": ["node"]
+  },
+  "include": ["src", "test", "turbo"],
+  "exclude": ["node_modules", "dist"]
+}
