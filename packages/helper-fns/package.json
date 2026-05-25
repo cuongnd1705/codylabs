@@ -29,12 +29,13 @@
     "build": "tsdown src/index.ts --format cjs,esm --dts",
     "clean": "rm -rf .turbo node_modules dist",
     "prebuild": "rimraf dist",
-    "test": "jest --passWithNoTests",
-    "test:watch": "jest --watch"
+    "test": "vitest run",
+    "test:watch": "vitest"
   },
   "devDependencies": {
     "@codylabs/typescript-configs": "workspace:*",
     "tsdown": "^0.22.0",
-    "typescript": "^6.0.3"
+    "typescript": "^6.0.3",
+    "vitest": "^3.2.1"
   }
 }

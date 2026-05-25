@@ -1,3 +1,5 @@
+import { describe, expect, test } from 'vitest';
+
 import { clone, lowerize, mapEntries, mapKeys, mapValues, omit, pick, shake, upperize } from './object';
 
 const NULL = null as unknown as {};

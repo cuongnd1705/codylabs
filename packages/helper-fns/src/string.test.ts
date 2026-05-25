@@ -1,3 +1,5 @@
+import { describe, expect, test } from 'vitest';
+
 import { camel, capitalize, kebab, normalizeEmail, pascal, snake, template, title, trim } from './string';
 
 describe('string module', () => {

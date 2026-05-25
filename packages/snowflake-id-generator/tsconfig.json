@@ -5,8 +5,8 @@
     "incremental": false,
     "outDir": "dist",
     "rootDir": ".",
-    "types": ["node", "jest"]
+    "types": ["node"]
   },
-  "include": ["src", "test", "turbo", "jest.config.ts"],
+  "include": ["src", "turbo"],
   "exclude": ["node_modules", "dist"]
 }
