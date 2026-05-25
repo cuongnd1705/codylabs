@@ -1,5 +1,7 @@
-// DISCLAIMER: This file is a modified version of the original file from
-// @nestjs/terminus package to remove the dependency on it.
+/**
+ * Lightweight health indicator abstraction, adapted from @nestjs/terminus
+ * to avoid a hard dependency on it.
+ */
 
 /**
  * @publicApi
@@ -15,16 +17,6 @@ export type HealthIndicatorResult<
   Status extends HealthIndicatorStatus = HealthIndicatorStatus,
   OptionalData extends Record<string, any> = Record<string, any>,
 > = Record<Key, { status: Status } & OptionalData>;
-
-/**
- * Helper service which can be used to create health indicator results
- * @publicApi
- */
-export class HealthIndicatorService {
-  check<const Key extends string>(key: Key) {
-    return new HealthIndicatorSession(key);
-  }
-}
 
 type AdditionalData = Record<string, unknown>;
 
@@ -58,7 +50,6 @@ export class HealthIndicatorSession<Key extends Readonly<string> = string> {
 
     return {
       [this.key]: detail,
-      // TypeScript does not infer this.key as Key correctly.
     } as Record<Key, typeof detail>;
   }
 
@@ -84,7 +75,6 @@ export class HealthIndicatorSession<Key extends Readonly<string> = string> {
 
     return {
       [this.key]: detail,
-      // TypeScript does not infer this.key as Key correctly.
     } as Record<Key, typeof detail>;
   }
 }

@@ -32,9 +32,10 @@ describe('RedisToken', () => {
       expect(token).toBe('REDIS_CLIENT_CACHE123');
     });
 
-    it('should handle empty string connection name', () => {
-      const token = RedisToken('');
-      expect(token).toBe('REDIS_CLIENT');
+    it('should throw error for empty string connection name', () => {
+      expect(() => RedisToken('')).toThrow(
+        'Redis connection name cannot be an empty string. Use undefined for the default connection.',
+      );
     });
 
     it('should handle connection names with special characters', () => {
