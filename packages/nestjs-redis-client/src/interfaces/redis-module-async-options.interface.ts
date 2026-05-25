@@ -1,6 +1,6 @@
 import { ConfigurableModuleAsyncOptions } from '@nestjs/common';
 
-import { RedisModuleOptions } from '../types';
+import { RedisModuleOptions } from '../types/types';
 import { RedisOptionsFactory } from './redis-options-factory.interface';
 
 /**

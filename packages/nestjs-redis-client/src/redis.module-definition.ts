@@ -1,7 +1,7 @@
 import { ConfigurableModuleBuilder } from '@nestjs/common';
 
 import { RedisOptionsFactory } from './interfaces';
-import { RedisModuleOptions } from './types';
+import { RedisModuleOptions } from './types/types';
 
 export const { ConfigurableModuleClass, MODULE_OPTIONS_TOKEN } = new ConfigurableModuleBuilder<RedisModuleOptions>({
   moduleName: 'RedisClient',

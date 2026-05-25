@@ -41,6 +41,7 @@
   "explorer.fileNesting.patterns": {
     "*.ts": "${capture].js, ${capture}.*.ts",
     "*.js": "${capture}.js.map, ${capture}.min.js, ${capture}.d.ts",
+    "*.module.ts": "${capture}.module-definition.ts",
     "tsconfig.json": "tsconfig.*.json",
     "package.json": "package-lock.json, pnpm-lock.yaml, pnpm-workspace.yaml",
     "Dockerfile": "docker-compose.yml, docker-compose.*.yml, .dockerignore",
