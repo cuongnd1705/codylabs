@@ -1,11 +1,7 @@
-import type { RedisClientType } from 'redis';
-
 import { Injectable } from '@nestjs/common';
-import { ThrottlerStorage } from '@nestjs/throttler';
-import { ThrottlerStorageService } from '@nestjs/throttler';
+import { ThrottlerStorage, ThrottlerStorageService } from '@nestjs/throttler';
 import { ThrottlerStorageRecord } from '@nestjs/throttler/dist/throttler-storage-record.interface';
-import { createClient } from 'redis';
-import { type RedisClusterType, createCluster } from 'redis';
+import { type RedisClientType, type RedisClusterType, createClient, createCluster } from 'redis';
 
 import { RedisThrottlerStorage } from './throttler-storage.service';
 
