@@ -5,7 +5,7 @@ export default async (): Promise<Config> => {
     collectCoverageFrom: ['**/*.(t|j)s'],
     coverageDirectory: '../coverage',
     moduleFileExtensions: ['js', 'json', 'ts'],
-    rootDir: 'test',
+    rootDir: 'src',
     testEnvironment: 'node',
     testRegex: ['.*\\.test\\.ts$', '.*\\.spec\\.ts$'],
     transform: {
