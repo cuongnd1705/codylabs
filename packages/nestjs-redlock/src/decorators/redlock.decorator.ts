@@ -1,6 +1,6 @@
 import { Inject } from '@nestjs/common';
 
-import { RedlockService } from './redlock.service';
+import { RedlockService } from '../services/redlock.service';
 
 // 7. Better TypeScript types
 export function Redlock<T extends (...args: any[]) => any>(
@@ -60,7 +60,7 @@ export function Redlock<T extends (...args: any[]) => any>(
           if (descriptor) {
             Object.defineProperty(wrappedMethod, key, descriptor);
           }
-        } catch (error) {
+        } catch {
           // 5. Some properties might not be configurable, skip them
           console.warn(`Could not copy property ${key} from original method`);
         }

@@ -255,22 +255,6 @@ importers:
         specifier: ^11.0.0
         version: 11.1.23(@nestjs/common@11.1.23(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@11.1.23)(@nestjs/platform-express@11.1.23)
 
-  packages/nestjs-redis-lock:
-    dependencies:
-      '@nestjs/common':
-        specifier: ^10.0.0 || ^11.0.0
-        version: 11.1.23(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)
-      '@redis-kit/lock':
-        specifier: ^0.1.0-3
-        version: 0.1.0-3(redis@5.12.1)
-    devDependencies:
-      '@codylabs/typescript-configs':
-        specifier: workspace:*
-        version: link:../typescript-configs
-      '@nestjs/testing':
-        specifier: ^11.0.0
-        version: 11.1.23(@nestjs/common@11.1.23(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@11.1.23)(@nestjs/platform-express@11.1.23)
-
   packages/nestjs-redis-schedule:
     dependencies:
       '@nestjs/common':
@@ -305,6 +289,25 @@ importers:
       '@codylabs/typescript-configs':
         specifier: workspace:*
         version: link:../typescript-configs
+
+  packages/nestjs-redlock:
+    dependencies:
+      '@nestjs/common':
+        specifier: ^10.0.0 || ^11.0.0
+        version: 11.1.23(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)
+      '@redis-kit/lock':
+        specifier: ^0.1.0-3
+        version: 0.1.0-3(redis@5.12.1)
+      redis:
+        specifier: ^5.0.0
+        version: 5.12.1
+    devDependencies:
+      '@codylabs/typescript-configs':
+        specifier: workspace:*
+        version: link:../typescript-configs
+      '@nestjs/testing':
+        specifier: ^11.0.0
+        version: 11.1.23(@nestjs/common@11.1.23(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@11.1.23)(@nestjs/platform-express@11.1.23)
 
   packages/nestjs-throttler-storage-redis:
     dependencies:

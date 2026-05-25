@@ -3,7 +3,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { RedisClientType, createClient } from 'redis';
 
 import { RedlockModule } from './redlock.module';
-import { RedlockService } from './redlock.service';
+import { RedlockService } from './services/redlock.service';
 
 describe('RedisModule Integration forRoot', () => {
   let module: TestingModule;
