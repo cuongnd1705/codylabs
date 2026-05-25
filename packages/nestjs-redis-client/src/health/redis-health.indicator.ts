@@ -1,33 +1,14 @@
 import { Injectable } from '@nestjs/common';
+import { HealthIndicatorService } from '@nestjs/terminus';
 
 import { RedisInstance } from '../types';
-import { HealthIndicatorResult, HealthIndicatorSession } from './health-indicator.service';
 
-/**
- * Health indicator for Redis connections.
- *
- * @example
- * ```typescript
- * @Injectable()
- * export class HealthController {
- *   constructor(
- *     @InjectRedis() private readonly redis: RedisClientType,
- *     private readonly redisHealth: RedisHealthIndicator,
- *   ) {}
- *
- *   @Get('health')
- *   async check() {
- *     return this.redisHealth.isHealthy('redis', this.redis);
- *   }
- * }
- * ```
- *
- * @publicApi
- */
 @Injectable()
 export class RedisHealthIndicator {
-  async isHealthy(key: string, client: RedisInstance): Promise<HealthIndicatorResult> {
-    const indicator = new HealthIndicatorSession(key);
+  constructor(private readonly healthIndicatorService: HealthIndicatorService) {}
+
+  async isHealthy(key: string, client: RedisInstance) {
+    const indicator = this.healthIndicatorService.check(key);
 
     try {
       const result = await client.ping();
