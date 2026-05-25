@@ -88,7 +88,9 @@ export class RedisModule extends ConfigurableModuleClass implements OnApplicatio
       provide: RedisToken(connectionName),
       useFactory: async (config: RedisModuleOptions): Promise<RedisInstance> => {
         function getClient(): RedisInstance {
-          switch (config?.type) {
+          const type = config?.type;
+
+          switch (type) {
             case 'client':
             case undefined:
               return createClient(config?.options);
@@ -98,8 +100,7 @@ export class RedisModule extends ConfigurableModuleClass implements OnApplicatio
               return createSentinel(config.options);
             default:
               throw new Error(
-                // @ts-expect-error check for config type
-                `Unsupported Redis type: ${config?.type}. Supported types are 'client', 'cluster' and 'sentinel'`,
+                `Unsupported Redis type: ${type}. Supported types are 'client', 'cluster' and 'sentinel'`,
               );
           }
         }

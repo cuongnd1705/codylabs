@@ -9,7 +9,6 @@ Flexible, production-ready Redis client module for NestJS with multi-connection 
 - NestJS DI integration and lifecycle management
 - Async configuration with `forRootAsync`
 - `forFeature()` for scoped connection re-exports
-- Built-in health check indicator (no `@nestjs/terminus` dependency required)
 - Configurable logging (enable, disable, or use a custom logger)
 - Type-safe, production-ready
 
@@ -150,47 +149,12 @@ Use `forFeature()` in feature modules to re-export a specific named connection w
 export class CacheFeatureModule {}
 ```
 
-### Health Check
-
-The built-in `RedisHealthIndicator` lets you check Redis connectivity without depending on `@nestjs/terminus`:
-
-```typescript
-import { Injectable, Get, Controller } from '@nestjs/common';
-import { InjectRedis, RedisHealthIndicator } from '@codylabs/nestjs-redis-client';
-import type { RedisClientType } from 'redis';
-
-@Controller('health')
-export class HealthController {
-  constructor(
-    @InjectRedis() private readonly redis: RedisClientType,
-    private readonly redisHealth: RedisHealthIndicator,
-  ) {}
-
-  @Get()
-  async check() {
-    return this.redisHealth.isHealthy('redis', this.redis);
-    // Returns: { redis: { status: 'up' } }
-    // Or:     { redis: { status: 'down', message: '...' } }
-  }
-}
-```
-
-Register `RedisHealthIndicator` in your module's providers:
-
-```typescript
-@Module({
-  providers: [RedisHealthIndicator, HealthController],
-})
-export class HealthModule {}
-```
-
 ## API
 
 - `@InjectRedis(name?)` - Decorator to inject a Redis client
 - `RedisToken(name?)` - Get the injection token for a Redis client
 - `RedisModule.forRoot(options)` / `forRootAsync(options)` - Module registration
 - `RedisModule.forFeature(name?)` - Re-export a named connection for feature modules
-- `RedisHealthIndicator` - Injectable health check service
 - `RedisInstance` - Type alias for all Redis client types (client, cluster, sentinel)
 - `RedisLogger` - Interface for custom logger implementations
 

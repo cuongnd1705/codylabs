@@ -10,5 +10,3 @@ export type {
 } from './types';
 export { RedisToken } from './constants';
 export type { RedisOptionsFactory, RedisModuleAsyncOptions } from './interfaces';
-export { RedisHealthIndicator } from './health';
-export type { HealthIndicatorResult, HealthIndicatorStatus } from './health';
