@@ -1,40 +1,84 @@
-# @codylabs/nestjs-redis
+# @codylabs/nestjs-redis-client
 
-Redis (using node-redis) module for NestJS.
+Flexible, production-ready Redis client module for NestJS with multi-connection support, built on the modern node-redis client.
 
-## Description
+## Features
 
-This module provides a Redis integration for NestJS applications using the `node-redis` library. It supports both Redis clients and Redis clusters, allowing you to easily connect to and interact with Redis servers.
+- Multi-connection support (named connections)
+- Client, Cluster, and Sentinel modes
+- NestJS DI integration and lifecycle management
+- Async configuration with `forRootAsync`
+- `forFeature()` for scoped connection re-exports
+- Configurable logging (enable, disable, or use a custom logger)
+- Type-safe, production-ready
 
 ## Installation
 
 ```sh
 # npm
-npm install @codylabs/nestjs-redis redis
-
-# yarn
-yarn add @codylabs/nestjs-redis redis
+npm install @codylabs/nestjs-redis-client redis
 
 # pnpm
-pnpm add @codylabs/nestjs-redis redis
+pnpm add @codylabs/nestjs-redis-client redis
 ```
 
 ## Usage
 
 ### Basic Usage
 
-To use the nestjs-redis module, import it into your NestJS module and configure it with your Redis options.
-
-```ts
+```typescript
 import { Module } from '@nestjs/common';
-import { RedisModule } from '@codylabs/nestjs-redis';
+import { RedisModule } from '@codylabs/nestjs-redis-client';
 
 @Module({
   imports: [
     RedisModule.forRoot({
-      clientConfigurations: {
-        url: 'redis://localhost:6379',
-      },
+      options: { url: 'redis://localhost:6379' },
+    }),
+  ],
+})
+export class AppModule {}
+```
+
+### Injecting the Redis Client
+
+```typescript
+import { Injectable } from '@nestjs/common';
+import { InjectRedis } from '@codylabs/nestjs-redis-client';
+import type { RedisClientType } from 'redis';
+
+@Injectable()
+export class AppService {
+  constructor(@InjectRedis() private readonly redis: RedisClientType) {}
+
+  async setValue(key: string, value: string) {
+    await this.redis.set(key, value);
+  }
+
+  async getValue(key: string) {
+    return this.redis.get(key);
+  }
+}
+```
+
+### Multi-Connection
+
+```typescript
+@Module({
+  imports: [
+    RedisModule.forRoot({
+      isGlobal: true,
+      options: { url: 'redis://localhost:6379' },
+    }),
+    RedisModule.forRoot({
+      connectionName: 'cache',
+      type: 'client',
+      options: { url: 'redis://cache:6379' },
+    }),
+    RedisModule.forRoot({
+      connectionName: 'cluster',
+      type: 'cluster',
+      options: { rootNodes: [{ url: 'redis://cluster:6379' }] },
     }),
   ],
 })
@@ -43,12 +87,10 @@ export class AppModule {}
 
 ### Async Configuration
 
-You can also configure the module asynchronously using `forRootAsync`.
-
-```ts
+```typescript
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import { RedisModule } from '@codylabs/nestjs-redis';
+import { RedisModule } from '@codylabs/nestjs-redis-client';
 
 @Module({
   imports: [
@@ -56,9 +98,7 @@ import { RedisModule } from '@codylabs/nestjs-redis';
     RedisModule.forRootAsync({
       imports: [ConfigModule],
       useFactory: async (configService: ConfigService) => ({
-        clientConfigurations: {
-          url: configService.get<string>('REDIS_URL'),
-        },
+        options: { url: configService.get<string>('REDIS_URL') },
       }),
       inject: [ConfigService],
     }),
@@ -67,26 +107,57 @@ import { RedisModule } from '@codylabs/nestjs-redis';
 export class AppModule {}
 ```
 
-### Using Redis Service
+## Logging
 
-You can inject the `RedisService` to interact with Redis.
+Logging is controlled via the `logger` option in `forRoot` / `forRootAsync`:
 
-```ts
-import { RedisClientConnectionType, RedisService } from '@codylabs/nestjs-redis';
-import { Injectable } from '@nestjs/common';
+```typescript
+// Default — uses the built-in NestJS Logger
+RedisModule.forRoot({
+  options: { url: 'redis://localhost:6379' },
+});
 
-@Injectable()
-export class MyService {
-  private readonly client: RedisClientConnectionType;
+// Disable all logging
+RedisModule.forRoot({
+  logger: false,
+  options: { url: 'redis://localhost:6379' },
+});
 
-  constructor(private readonly redisService: RedisService) {
-    this.client = this.redisService.getOrThrow();
-  }
+// Custom logger
+import type { RedisLogger } from '@codylabs/nestjs-redis-client';
 
-  async set(key: string, value: any, ttl?: number) {
-    return this.client.set(key, value, {
-      PX: ttl,
-    });
-  }
-}
+const myLogger: RedisLogger = {
+  log: (msg) => console.log(msg),
+  error: (msg) => console.error(msg),
+  warn: (msg) => console.warn(msg),
+};
+
+RedisModule.forRoot({
+  logger: myLogger,
+  options: { url: 'redis://localhost:6379' },
+});
 ```
+
+### forFeature
+
+Use `forFeature()` in feature modules to re-export a specific named connection without making the root module global:
+
+```typescript
+@Module({
+  imports: [RedisModule.forFeature('cache')],
+})
+export class CacheFeatureModule {}
+```
+
+## API
+
+- `@InjectRedis(name?)` - Decorator to inject a Redis client
+- `RedisToken(name?)` - Get the injection token for a Redis client
+- `RedisModule.forRoot(options)` / `forRootAsync(options)` - Module registration
+- `RedisModule.forFeature(name?)` - Re-export a named connection for feature modules
+- `RedisInstance` - Type alias for all Redis client types (client, cluster, sentinel)
+- `RedisLogger` - Interface for custom logger implementations
+
+## License
+
+MIT

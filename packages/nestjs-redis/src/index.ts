@@ -1,6 +1,12 @@
-export * from './constants';
-export * from './interfaces';
-export * from './providers';
-export * from './redis.module';
-export * from './services';
-export * from './types';
+export { RedisModule } from './redis.module';
+export { InjectRedis } from './decorators';
+export type {
+  RedisInstance,
+  RedisLogger,
+  RedisModuleOptions,
+  RedisConnectionConfig,
+  RedisModuleForRootOptions,
+  RedisOptions,
+} from './types';
+export { RedisToken } from './constants';
+export type { RedisOptionsFactory, RedisModuleAsyncOptions } from './interfaces';

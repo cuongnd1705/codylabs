@@ -226,22 +226,6 @@ importers:
         specifier: ^10.0.0 || ^11.0.0
         version: 11.1.23(@nestjs/common@11.1.23(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/platform-express@11.1.23)(reflect-metadata@0.2.2)(rxjs@7.8.2)
       redis:
-        specifier: ^4.7.0
-        version: 4.7.1
-    devDependencies:
-      '@codylabs/typescript-configs':
-        specifier: workspace:*
-        version: link:../typescript-configs
-
-  packages/nestjs-redis-client:
-    dependencies:
-      '@nestjs/common':
-        specifier: ^10.0.0 || ^11.0.0
-        version: 11.1.23(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)
-      '@nestjs/core':
-        specifier: ^10.0.0 || ^11.0.0
-        version: 11.1.23(@nestjs/common@11.1.23(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/platform-express@11.1.23)(reflect-metadata@0.2.2)(rxjs@7.8.2)
-      redis:
         specifier: ^5.0.0
         version: 5.12.1
     devDependencies:

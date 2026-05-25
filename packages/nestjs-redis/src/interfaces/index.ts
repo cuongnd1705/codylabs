@@ -1,1 +1,2 @@
-export * from './redis.interface';
+export * from './redis-options-factory.interface';
+export * from './redis-module-async-options.interface';
