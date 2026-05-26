@@ -1,5 +1,3 @@
-import { EnvModuleOptions } from './env-module-option.interface';
-
 type Prev = [never, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, ...0[]];
 
 type Join<K, P> = K extends string | number
@@ -34,60 +32,4 @@ export type NestedValueOf<Obj, Key> = Key extends keyof Obj
 
 export type KeyOf<T> = keyof T extends never ? string : keyof T;
 
-export type RequiredPaths<T> = {
-  [K in keyof T]-?: T[K] extends undefined ? never : K;
-}[keyof T];
-
-export type OptionalPaths<T> = {
-  [K in keyof T]-?: T[K] extends undefined ? K : never;
-}[keyof T];
-
 export type PathValue<T, P extends Paths<T>> = NestedValueOf<T, P>;
-
-export type HasPath<T, P extends string> = P extends Paths<T> ? true : false;
-
-export interface ConfigValidation<T> {
-  isValid: boolean;
-  errors: {
-    path: string;
-    message: string;
-  }[];
-  config: T;
-}
-
-export type EnvConfig<T> = T & {
-  NODE_ENV: 'development' | 'production' | 'test' | string;
-};
-
-export interface ConfigWithMeta<T> {
-  config: T;
-  metadata: {
-    loadedFiles: string[];
-    loadedAt: Date;
-    environment: string;
-  };
-}
-
-export type Brand<T, B> = T & { __brand: B };
-export type ConfigPath<T> = Brand<Paths<T>, 'ConfigPath'>;
-export type ConfigValue<T, P extends Paths<T>> = Brand<NestedValueOf<T, P>, 'ConfigValue'>;
-
-export type ConfigSchema<T> = {
-  readonly [K in keyof T]: T[K] extends object
-    ? ConfigSchema<T[K]>
-    : {
-        type: 'string' | 'number' | 'boolean' | 'array' | 'object';
-        required?: boolean;
-        default?: T[K];
-        description?: string;
-        validation?: (value: T[K]) => boolean;
-      };
-};
-
-export type ConfigTransformer<T, U> = (config: T) => U;
-
-export type ConditionalConfig<T, E extends string = string> = T & {
-  [K in E as `${K}Override`]?: Partial<T>;
-};
-
-export type LoadConfigOptions = Omit<EnvModuleOptions, 'class'>;

@@ -20,18 +20,17 @@
     "test:watch": "jest --watch"
   },
   "dependencies": {
+    "@standard-schema/spec": "^1.1.0",
     "destr": "^2.0.5",
+    "dotenv": "^16.5.0",
     "glob": "^13.0.6"
   },
   "devDependencies": {
     "@codylabs/helper-fns": "workspace:*",
     "@codylabs/typescript-configs": "workspace:*",
-    "@nestjs/config": "^4.0.4",
     "@nestjs/platform-express": "^11.1.23",
     "@types/express": "^5.0.6",
     "@types/node": "^25.9.1",
-    "class-transformer": "^0.5.1",
-    "class-validator": "^0.15.1",
     "express": "^5.2.1",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.2"

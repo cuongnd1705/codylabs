@@ -1,9 +1,11 @@
-import { ClassConstructor } from 'class-transformer';
+import type { StandardSchemaV1 } from '@standard-schema/spec';
 
 export interface EnvModuleOptions {
-  class: ClassConstructor<object>;
+  schema: StandardSchemaV1;
   env?: string;
   configDir?: string;
-  extension?: string;
+  basePath?: string;
+  extensions?: string[];
   enableGlobalPattern?: boolean;
+  nestingSeparator?: string;
 }

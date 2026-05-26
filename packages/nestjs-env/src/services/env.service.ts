@@ -1,57 +1,41 @@
-import { Injectable, Logger } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
+import { Inject, Injectable, Logger } from '@nestjs/common';
 
-import { KeyOf, NestedValueOf, Paths } from '../interfaces';
+import { ENV_CONFIG } from '../constants';
+import { NestedValueOf, Paths } from '../interfaces';
 
 @Injectable()
 export class EnvService<T extends Record<string, any> = Record<string, any>> {
   private readonly logger = new Logger(EnvService.name);
 
-  constructor(private readonly configService: ConfigService<T, true>) {}
+  constructor(@Inject(ENV_CONFIG) private readonly config: T) {}
 
   /**
    * Get a configuration value by path with type safety
    */
   get<K extends Paths<T, 3>>(path: K): NestedValueOf<T, K> {
-    try {
-      const value = this.configService.get<unknown>(path as unknown as KeyOf<T>);
+    const value = this.getNestedValue(this.config, path as string);
 
-      if (value === undefined) {
-        this.logger.warn(`Configuration value not found for path: ${path}`);
-      }
-
-      return value as NestedValueOf<T, K>;
-    } catch (error: any) {
-      this.logger.error(`Failed to get configuration for path: ${path}`, error.stack);
-
-      throw error;
+    if (value === undefined) {
+      this.logger.warn(`Configuration value not found for path: ${path}`);
     }
+
+    return value as NestedValueOf<T, K>;
   }
 
   /**
    * Get a configuration value with a fallback default
    */
   getOrDefault<K extends Paths<T, 3>>(path: K, defaultValue: NestedValueOf<T, K>): NestedValueOf<T, K> {
-    try {
-      const value = this.get(path);
+    const value = this.get(path);
 
-      return value !== undefined ? value : defaultValue;
-    } catch {
-      this.logger.debug(`Using default value for path: ${path}`);
-
-      return defaultValue;
-    }
+    return value !== undefined ? value : defaultValue;
   }
 
   /**
    * Check if a configuration path exists
    */
   has<K extends Paths<T, 3>>(path: K): boolean {
-    try {
-      return this.configService.get<unknown>(path as unknown as KeyOf<T>) !== undefined;
-    } catch {
-      return false;
-    }
+    return this.getNestedValue(this.config, path as string) !== undefined;
   }
 
   /**
@@ -68,14 +52,14 @@ export class EnvService<T extends Record<string, any> = Record<string, any>> {
   }
 
   /**
-   * Get all configuration as a plain object (useful for debugging)
+   * Get all configuration as a plain object
    */
   getAll(): T {
-    return this.configService.get<T>('') as T;
+    return this.config;
   }
 
   /**
-   * Get a configuration value and validate it's not undefined
+   * Get a configuration value and validate it's not undefined or null
    */
   getRequired<K extends Paths<T, 3>>(path: K): NonNullable<NestedValueOf<T, K>> {
     const value = this.get(path);
@@ -88,23 +72,6 @@ export class EnvService<T extends Record<string, any> = Record<string, any>> {
   }
 
   /**
-   * Type-safe environment validation
-   */
-  validate(): T {
-    try {
-      const config = this.getAll();
-
-      this.logger.log('Configuration validation successfully');
-
-      return config;
-    } catch (error: any) {
-      this.logger.error('Configuration validation failed', error.stack);
-
-      throw error;
-    }
-  }
-
-  /**
    * Get configuration value parsed as specific type
    */
   getParsed<K extends Paths<T, 3>, R = any>(path: K, parser: (value: NestedValueOf<T, K>) => R): R {
@@ -113,15 +80,10 @@ export class EnvService<T extends Record<string, any> = Record<string, any>> {
     try {
       return parser(value);
     } catch (error: any) {
-      this.logger.error(`Failed to parse configuration value at path: ${path}`, error.stack);
-
       throw new Error(`Configuration parsing failed for ${path}: ${error.message}`, { cause: error });
     }
   }
 
-  /**
-   * Utility methods for common parsing scenarios
-   */
   getNumber<K extends Paths<T, 3>>(path: K): number {
     return this.getParsed(path, (value) => {
       const num = Number(value);
@@ -178,5 +140,9 @@ export class EnvService<T extends Record<string, any> = Record<string, any>> {
         throw new Error(`Value is not a valid URL: ${value}`);
       }
     });
+  }
+
+  private getNestedValue(obj: any, path: string): any {
+    return path.split('.').reduce((current, key) => current?.[key], obj);
   }
 }

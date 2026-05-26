@@ -1,14 +1,19 @@
+import type { StandardSchemaV1 } from '@standard-schema/spec';
+
 import { DynamicModule, Global, Logger, Module } from '@nestjs/common';
-import { ConfigModule } from '@nestjs/config';
-import { ClassConstructor, plainToClass } from 'class-transformer';
-import { validateSync, ValidationError } from 'class-validator';
-import destr from 'destr';
 import { glob } from 'glob';
 import fs from 'node:fs';
 import path from 'node:path';
 
-import { ConfigurableModuleClass, OPTIONS_TYPE } from './env.module-definition';
-import { LoadConfigOptions } from './interfaces';
+import { ENV_CONFIG } from './constants';
+import {
+  ASYNC_OPTIONS_TYPE,
+  ConfigurableModuleClass,
+  MODULE_OPTIONS_TOKEN,
+  OPTIONS_TYPE,
+} from './env.module-definition';
+import { EnvModuleOptions } from './interfaces';
+import { parseEnvFile, parseJsonFile } from './parsers';
 import { EnvService } from './services';
 import { merge } from './utils';
 
@@ -20,19 +25,52 @@ export class EnvModule extends ConfigurableModuleClass {
   static register(options: typeof OPTIONS_TYPE): DynamicModule {
     return {
       module: EnvModule,
-      imports: [
-        ConfigModule.forRoot({
-          ignoreEnvFile: true,
-          load: [() => this.validate(options.class, this.load(options))],
-        }),
+      providers: [
+        {
+          provide: ENV_CONFIG,
+          useFactory: async () => {
+            const rawConfig = this.load(options);
+
+            return this.validate(options.schema, rawConfig);
+          },
+        },
+        EnvService,
       ],
-      providers: [EnvService],
-      exports: [EnvService],
+      exports: [EnvService, ENV_CONFIG],
     };
   }
 
-  private static load(options: LoadConfigOptions): Record<string, unknown> {
-    const { env, configDir = 'config', extension = '.json', enableGlobalPattern = true } = options;
+  static registerAsync(options: typeof ASYNC_OPTIONS_TYPE): DynamicModule {
+    const parentModule = super.registerAsync(options);
+
+    return {
+      ...parentModule,
+      providers: [
+        ...(parentModule.providers ?? []),
+        {
+          provide: ENV_CONFIG,
+          useFactory: async (moduleOptions: EnvModuleOptions) => {
+            const rawConfig = this.load(moduleOptions);
+
+            return this.validate(moduleOptions.schema, rawConfig);
+          },
+          inject: [MODULE_OPTIONS_TOKEN],
+        },
+        EnvService,
+      ],
+      exports: [EnvService, ENV_CONFIG],
+    };
+  }
+
+  private static load(options: EnvModuleOptions): Record<string, unknown> {
+    const {
+      env,
+      configDir = 'config',
+      basePath = process.cwd(),
+      extensions = ['.json'],
+      enableGlobalPattern = true,
+      nestingSeparator = '__',
+    } = options;
 
     let config: Record<string, unknown> = {};
 
@@ -40,7 +78,8 @@ export class EnvModule extends ConfigurableModuleClass {
       const configFilePaths = this.getConfigFilePaths({
         env,
         configDir,
-        extension,
+        basePath,
+        extensions,
         enableGlobalPattern,
       });
 
@@ -48,7 +87,7 @@ export class EnvModule extends ConfigurableModuleClass {
 
       for (const configFilePath of configFilePaths) {
         try {
-          const fileConfig = this.readJsonFile(configFilePath);
+          const fileConfig = this.readFile(configFilePath, nestingSeparator);
 
           config = merge(config, fileConfig);
 
@@ -65,102 +104,93 @@ export class EnvModule extends ConfigurableModuleClass {
     }
   }
 
-  private static getConfigFilePaths(options: LoadConfigOptions): string[] {
-    const { env, configDir, extension, enableGlobalPattern } = options;
+  private static getConfigFilePaths(options: {
+    env?: string;
+    configDir: string;
+    basePath: string;
+    extensions: string[];
+    enableGlobalPattern: boolean;
+  }): string[] {
+    const { env, configDir, basePath, extensions, enableGlobalPattern } = options;
 
-    const getFilePath = (filename: string): string => path.join(process.cwd(), configDir, `${filename}${extension}`);
+    const resolveFirst = (filename: string): string | false => {
+      for (const ext of extensions) {
+        const filePath = path.join(basePath, configDir, `${filename}${ext}`);
+
+        if (fs.existsSync(filePath)) {
+          return filePath;
+        }
+      }
+
+      return false;
+    };
 
     const configPaths: (string | false)[] = [
-      getFilePath('global'),
-      ...(enableGlobalPattern ? this.getGlobalPatternFiles(configDir, extension) : []),
-      env ? getFilePath(`global.${env}`) : false,
-      getFilePath('local'),
-      env ? getFilePath(`local.${env}`) : false,
-      getFilePath('secret'),
+      resolveFirst('global'),
+      ...(enableGlobalPattern ? this.getGlobalPatternFiles(basePath, configDir, extensions) : []),
+      env ? resolveFirst(`global.${env}`) : false,
+      resolveFirst('local'),
+      env ? resolveFirst(`local.${env}`) : false,
+      resolveFirst('secret'),
     ];
 
-    const existingPaths = configPaths
-      .filter(Boolean)
-      .map(String)
-      .filter((filePath) => {
-        const exists = fs.existsSync(filePath);
+    const existingPaths = configPaths.filter((p): p is string => typeof p === 'string');
 
-        if (!exists) {
-          this.logger.debug(`Config file not found: ${filePath}`);
-        }
-
-        return exists;
-      });
+    this.logger.debug(`Resolved config files: ${existingPaths.join(', ') || '(none)'}`);
 
     return existingPaths;
   }
 
-  private static getGlobalPatternFiles(configDir: string, extension: string): string[] {
-    try {
-      const globalPattern = `*.global${extension}`;
-      const pattern = path.join(process.cwd(), configDir, globalPattern);
+  private static getGlobalPatternFiles(basePath: string, configDir: string, extensions: string[]): string[] {
+    const files: string[] = [];
 
-      return glob.sync(pattern);
+    try {
+      for (const ext of extensions) {
+        const globalPattern = `*.global${ext}`;
+        const pattern = path.join(basePath, configDir, globalPattern);
+
+        files.push(...glob.sync(pattern));
+      }
     } catch (error: any) {
       this.logger.warn(`Failed to load global pattern files: ${error.message}`);
-
-      return [];
     }
+
+    return files;
   }
 
-  private static readJsonFile(filePath: string): Record<string, unknown> {
+  private static readFile(filePath: string, nestingSeparator: string): Record<string, unknown> {
     try {
       const content = fs.readFileSync(filePath, 'utf-8');
+      const ext = path.extname(filePath).toLowerCase();
 
-      if (!content.trim()) {
-        this.logger.warn(`Empty config file: ${filePath}`);
+      switch (ext) {
+        case '.env':
+          return parseEnvFile(content, filePath, nestingSeparator);
+        case '.json':
+          return parseJsonFile(content, filePath);
+        default:
+          this.logger.warn(`Unsupported config file extension "${ext}": ${filePath}`);
 
-        return {};
+          return {};
       }
-
-      const parsed = destr(content);
-
-      if (parsed === null || parsed === undefined) {
-        this.logger.warn(`Invalid JSON in config file: ${filePath}`);
-
-        return {};
-      }
-
-      if (typeof parsed !== 'object' || Array.isArray(parsed)) {
-        this.logger.warn(`Config file must contain an object: ${filePath}`);
-
-        return {};
-      }
-
-      return parsed as Record<string, unknown>;
     } catch (error: any) {
       throw new Error(`Failed to read config file ${filePath}: ${error.message}`, { cause: error });
     }
   }
 
-  private static validate<T extends object>(classConstructor: ClassConstructor<T>, config: Record<string, unknown>): T {
+  private static async validate(schema: StandardSchemaV1, config: Record<string, unknown>): Promise<unknown> {
     try {
-      const validatedConfig = plainToClass(classConstructor, config, {
-        enableImplicitConversion: true,
-        excludeExtraneousValues: false,
-        exposeDefaultValues: true,
-      });
+      const result = await schema['~standard'].validate(config);
 
-      const errors = validateSync(validatedConfig, {
-        skipMissingProperties: false,
-        whitelist: true,
-        forbidNonWhitelisted: false,
-      });
-
-      if (errors.length > 0) {
-        const errorMessages = this.formatValidationErrors(errors);
+      if ('issues' in result && result.issues) {
+        const errorMessages = this.formatValidationIssues(result.issues);
 
         throw new Error(`Configuration validation failed:\n${errorMessages}`);
       }
 
-      this.logger.log('Configuration validation successfully');
+      this.logger.log('Configuration validated successfully');
 
-      return validatedConfig;
+      return (result as StandardSchemaV1.SuccessResult<unknown>).value;
     } catch (error: any) {
       this.logger.error('Configuration validation failed', error.stack);
 
@@ -168,26 +198,13 @@ export class EnvModule extends ConfigurableModuleClass {
     }
   }
 
-  private static formatValidationErrors(errors: ValidationError[]): string {
-    const formatError = (error: ValidationError, filePath = ''): string[] => {
-      const currentPath = filePath ? `${filePath}.${error.property}` : error.property;
-      const messages: string[] = [];
+  private static formatValidationIssues(issues: readonly StandardSchemaV1.Issue[]): string {
+    return issues
+      .map((issue) => {
+        const issuePath = issue.path?.map((segment) => (typeof segment === 'object' ? segment.key : segment)).join('.');
 
-      if (error.constraints) {
-        Object.values(error.constraints).forEach((constraint) => {
-          messages.push(`  - ${currentPath}: ${constraint}`);
-        });
-      }
-
-      if (error.children && error.children.length > 0) {
-        error.children.forEach((child) => {
-          messages.push(...formatError(child, currentPath));
-        });
-      }
-
-      return messages;
-    };
-
-    return errors.flatMap((error) => formatError(error)).join('\n');
+        return issuePath ? `  - ${issuePath}: ${issue.message}` : `  - ${issue.message}`;
+      })
+      .join('\n');
   }
 }
