@@ -1,17 +1,5 @@
-import type { IThrottlerAlgorithm } from '../throttler-algorithm.interface.js';
+import type { IThrottlerAlgorithm } from '../interfaces/throttler-algorithm.interface';
 
-/**
- * Sliding Window Log rate limiter.
- *
- * Stores each request timestamp as a member in a SORTED SET.
- * Atomically prunes expired entries, checks the count, and
- * conditionally adds the new entry — preventing concurrent
- * requests from both slipping past the limit.
- *
- * Redis commands: TIME, ZREMRANGEBYSCORE, ZCARD, ZADD, PEXPIRE, PTTL, ZRANGE
- *
- * @see https://github.com/redis-developer/redis-ratelimiting-js/blob/main/server/components/rate-limiting/sliding-window-log.ts
- */
 export const SlidingWindowLogAlgorithm: IThrottlerAlgorithm = {
   script: `
     local key = KEYS[1]

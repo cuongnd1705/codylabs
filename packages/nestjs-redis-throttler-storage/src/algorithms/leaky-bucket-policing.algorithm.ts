@@ -1,18 +1,5 @@
-import type { IThrottlerAlgorithm } from '../throttler-algorithm.interface.js';
+import type { IThrottlerAlgorithm } from '../interfaces/throttler-algorithm.interface';
 
-/**
- * Leaky Bucket (Policing mode) rate limiter.
- *
- * Bucket fills with requests and leaks at a constant rate.
- * Excess requests are rejected immediately when the bucket is full.
- *
- * The leak rate is derived as `limit / (ttlMs / 1000)` — the bucket
- * fully drains over one window.
- *
- * Redis commands: TIME, HGETALL, HSET, PEXPIRE, PTTL
- *
- * @see https://github.com/redis-developer/redis-ratelimiting-js/blob/main/server/components/rate-limiting/leaky-bucket.ts
- */
 export const LeakyBucketPolicingAlgorithm: IThrottlerAlgorithm = {
   script: `
     local key = KEYS[1]

@@ -1,15 +1,5 @@
-import type { IThrottlerAlgorithm } from '../throttler-algorithm.interface.js';
+import type { IThrottlerAlgorithm } from '../interfaces/throttler-algorithm.interface';
 
-/**
- * Fixed Window Counter rate limiter.
- *
- * Uses a single STRING key per window.
- * Atomically increments the counter and sets the expiry on the first request.
- *
- * Redis commands: INCR, PEXPIRE, PTTL
- *
- * @see https://github.com/redis-developer/redis-ratelimiting-js/blob/main/server/components/rate-limiting/fixed-window.ts
- */
 export const FixedWindowAlgorithm: IThrottlerAlgorithm = {
   script: `
     local key = KEYS[1]

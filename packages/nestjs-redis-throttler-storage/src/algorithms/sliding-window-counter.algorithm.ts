@@ -1,21 +1,5 @@
-import type { IThrottlerAlgorithm } from '../throttler-algorithm.interface.js';
+import type { IThrottlerAlgorithm } from '../interfaces/throttler-algorithm.interface';
 
-/**
- * Sliding Window Counter rate limiter.
- *
- * Keeps two fixed-window counters (current and previous) and computes
- * a weighted count based on how far into the current window we are.
- * Atomically reads both counters, evaluates the weighted estimate,
- * and conditionally increments — preventing concurrent requests from
- * slipping past the limit.
- *
- * Both window keys are derived from KEYS[1] (base key) so they share
- * the same hash tag and map to the same slot in Redis Cluster.
- *
- * Redis commands: TIME, GET, INCR, PEXPIRE, PTTL
- *
- * @see https://github.com/redis-developer/redis-ratelimiting-js/blob/main/server/components/rate-limiting/sliding-window-counter.ts
- */
 export const SlidingWindowCounterAlgorithm: IThrottlerAlgorithm = {
   script: `
     local key = KEYS[1]
@@ -28,14 +12,12 @@ export const SlidingWindowCounterAlgorithm: IThrottlerAlgorithm = {
       return { limit + 1, -1, redis.call('PTTL', block_key), 1 }
     end
 
-    local window_seconds = math.floor(ttl_ms / 1000)
-
     local time = redis.call('TIME')
-    local now_seconds = tonumber(time[1])
+    local now_ms = tonumber(time[1]) * 1000 + math.floor(tonumber(time[2]) / 1000)
 
-    local current_window = math.floor(now_seconds / window_seconds)
+    local current_window = math.floor(now_ms / ttl_ms)
     local previous_window = current_window - 1
-    local elapsed = (now_seconds % window_seconds) / window_seconds
+    local elapsed = (now_ms % ttl_ms) / ttl_ms
 
     local current_key = key .. ':' .. current_window
     local previous_key = key .. ':' .. previous_window

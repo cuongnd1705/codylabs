@@ -1,19 +1,5 @@
-import type { IThrottlerAlgorithm } from '../throttler-algorithm.interface.js';
+import type { IThrottlerAlgorithm } from '../interfaces/throttler-algorithm.interface';
 
-/**
- * Token Bucket rate limiter.
- *
- * Stores tokens and last-refill timestamp in a HASH.
- * Atomically calculates tokens added since last refill, then tries
- * to consume one token. Allows short bursts up to `limit` (bucket capacity).
- *
- * The refill rate is derived as `limit / (ttlMs / 1000)` — the bucket
- * fully refills over one window.
- *
- * Redis commands: TIME, HGETALL, HSET, PEXPIRE, PTTL
- *
- * @see https://github.com/redis-developer/redis-ratelimiting-js/blob/main/server/components/rate-limiting/token-bucket.ts
- */
 export const TokenBucketAlgorithm: IThrottlerAlgorithm = {
   script: `
     local key = KEYS[1]

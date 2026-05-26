@@ -1,19 +1,5 @@
-import type { IThrottlerAlgorithm } from '../throttler-algorithm.interface.js';
+import type { IThrottlerAlgorithm } from '../interfaces/throttler-algorithm.interface';
 
-/**
- * Leaky Bucket (Shaping mode) rate limiter.
- *
- * Requests are queued and released at the leak rate. Each accepted
- * request carries a delay (in ms) indicating when it will be processed.
- * Requests are rejected only when the queue depth exceeds capacity.
- *
- * `timeToExpire` in the storage record carries the delay in seconds —
- * the time until the queued request should be processed.
- *
- * Redis commands: TIME, HGETALL, HSET, PEXPIRE
- *
- * @see https://github.com/redis-developer/redis-ratelimiting-js/blob/main/server/components/rate-limiting/leaky-bucket.ts
- */
 export const LeakyBucketShapingAlgorithm: IThrottlerAlgorithm = {
   script: `
     local key = KEYS[1]
@@ -52,12 +38,11 @@ export const LeakyBucketShapingAlgorithm: IThrottlerAlgorithm = {
     local expire_ms = math.ceil(limit / leak_rate) * 1000 + 1000
 
     if queue_depth + 1 <= limit then
-      local delay_ms = math.floor(delay * 1000)
       next_free = next_free + (1 / leak_rate)
       queue_depth = queue_depth + 1
       redis.call('HSET', key, 'next_free', tostring(next_free))
       redis.call('PEXPIRE', key, expire_ms)
-      return { math.ceil(queue_depth), delay_ms, -1, 0 }
+      return { math.ceil(queue_depth), redis.call('PTTL', key), -1, 0 }
     end
 
     redis.call('HSET', key, 'next_free', tostring(next_free))

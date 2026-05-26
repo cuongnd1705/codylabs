@@ -9,8 +9,10 @@ Redis storage for NestJS Throttler enabling distributed rate limiting across mul
 - Works with existing `@codylabs/nestjs-redis-client` connections
 - Client, Cluster and Sentinel support
 - Six pluggable rate-limiting algorithms via `ThrottlerAlgorithm`
+- `IThrottlerAlgorithm` exported for custom algorithm typing
 - All algorithms implemented as atomic Lua scripts (EVALSHA + NOSCRIPT fallback)
 - Optional block key support: lock out a client for a configurable duration after exceeding the limit
+- Configurable Redis key prefix for multi-tenant/shared Redis environments
 
 ## Installation
 
@@ -45,6 +47,18 @@ import { RedisThrottlerStorage } from '@codylabs/nestjs-redis-throttler-storage'
   ],
 })
 export class AppModule {}
+```
+
+### Configure Key Prefix
+
+By default, keys are prefixed with `_throttler`. You can override this with constructor options.
+
+```typescript
+import { RedisThrottlerStorage } from '@codylabs/nestjs-redis-throttler-storage';
+
+const storage = new RedisThrottlerStorage(redis, undefined, {
+  prefix: 'tenantA_throttler',
+});
 ```
 
 ### Without Existing Redis Connection
@@ -86,12 +100,16 @@ new RedisThrottlerStorage(redis, ThrottlerAlgorithm.TokenBucket);
 
 **`FixedWindow` is the default** because `@nestjs/throttler`'s built-in in-memory storage uses fixed window internally, making this a true drop-in replacement with identical behavior. For new projects, **`SlidingWindowCounter`** is the recommended general-purpose choice.
 
+`SlidingWindowCounter` uses millisecond-level time calculations to avoid silently losing precision on sub-second TTLs.
+
 ### Custom Algorithm
 
-You can bring your own Lua script. The script receives `KEYS[1]` (the rate-limit key) and `ARGV[1..3]` (`ttlMs`, `limit`, `blockDurationMs`), and must return a 4-element array `[totalHits, timeToExpireMs, timeToBlockExpireMs, isBlocked]`.
+You can bring your own Lua script. `IThrottlerAlgorithm` is exported so you can type your implementation directly. The script receives `KEYS[1]` (the rate-limit key) and `ARGV[1..3]` (`ttlMs`, `limit`, `blockDurationMs`), and must return a 4-element array `[totalHits, timeToExpireMs, timeToBlockExpireMs, isBlocked]`.
 
 ```typescript
-new RedisThrottlerStorage(redis, {
+import type { IThrottlerAlgorithm } from '@codylabs/nestjs-redis-throttler-storage';
+
+const customAlgorithm: IThrottlerAlgorithm = {
   script: `
     local key = KEYS[1]
     local ttl_ms = tonumber(ARGV[1])
@@ -99,7 +117,9 @@ new RedisThrottlerStorage(redis, {
     -- ... your logic ...
     return { count, pttl, -1, 0 }
   `,
-});
+};
+
+new RedisThrottlerStorage(redis, customAlgorithm);
 ```
 
 ### Block Duration
@@ -118,6 +138,14 @@ ThrottlerModule.forRootAsync({
     storage: new RedisThrottlerStorage(redis, ThrottlerAlgorithm.SlidingWindowLog),
   }),
 }),
+```
+
+### Manual Reset / Unblock
+
+Use `reset()` when you need to manually clear limiter and block keys for a client.
+
+```typescript
+await storage.reset('user:123', 'default');
 ```
 
 ## License

@@ -1,19 +1,28 @@
 import type { ThrottlerStorage } from '@nestjs/throttler';
 import type { ThrottlerStorageRecord } from '@nestjs/throttler/dist/throttler-storage-record.interface';
-import type { RedisClientType, RedisClusterType, RedisSentinelType } from 'redis';
 
 import { Injectable } from '@nestjs/common';
+import { RedisClientType, RedisClusterType, RedisSentinelType } from 'redis';
 
-import type { IThrottlerAlgorithm } from './throttler-algorithm.interface.js';
+import type { IThrottlerAlgorithm } from '../interfaces';
 
-import { ThrottlerAlgorithm } from './throttler-algorithms.js';
+import { ThrottlerAlgorithm } from '../throttler-algorithms';
 
 type RedisClientLike = RedisClientType | RedisClusterType | RedisSentinelType;
+
+export interface RedisThrottlerStorageOptions {
+  /**
+   * Prefix for all limiter keys.
+   * Default: `_throttler`.
+   */
+  prefix?: string;
+}
 
 @Injectable()
 export class RedisThrottlerStorage implements ThrottlerStorage {
   private scriptSha?: string;
-  private readonly prefix = '_throttler';
+  private scriptLoadPromise?: Promise<string>;
+  private readonly prefix: string;
 
   /**
    * Creates a Redis throttler storage from an existing Redis client.
@@ -22,17 +31,15 @@ export class RedisThrottlerStorage implements ThrottlerStorage {
    *
    * @param client The existing Redis client
    * @param algorithm The rate-limiting algorithm to use (default: FixedWindowAlgorithm)
-   *
-   * @example
-   * ```typescript
-   * // Default fixed-window algorithm
-   * const storage = new RedisThrottlerStorage(client);
-   * ```
+   * @param options Optional settings (e.g., prefix)
    */
   constructor(
     private readonly client: RedisClientLike,
     private readonly algorithm: IThrottlerAlgorithm = ThrottlerAlgorithm.FixedWindow,
-  ) {}
+    options?: RedisThrottlerStorageOptions,
+  ) {
+    this.prefix = options?.prefix || '_throttler';
+  }
 
   /**
    * Loads the Lua script into Redis and caches its SHA1 hash.
@@ -43,7 +50,23 @@ export class RedisThrottlerStorage implements ThrottlerStorage {
       return this.scriptSha;
     }
 
-    return (this.scriptSha = await this.client.scriptLoad(this.algorithm.script));
+    if (this.scriptLoadPromise) {
+      return this.scriptLoadPromise;
+    }
+
+    this.scriptLoadPromise = this.client
+      .scriptLoad(this.algorithm.script)
+      .then((sha) => {
+        this.scriptSha = String(sha);
+        this.scriptLoadPromise = undefined;
+        return this.scriptSha;
+      })
+      .catch((err: any) => {
+        this.scriptLoadPromise = undefined;
+        throw err;
+      });
+
+    return this.scriptLoadPromise;
   }
 
   /**
@@ -87,15 +110,24 @@ export class RedisThrottlerStorage implements ThrottlerStorage {
     try {
       return await this.executeScript(scriptSha, keys, args);
     } catch (error: unknown) {
-      // Handle NOSCRIPT error - script was flushed from Redis
       if ((error as Error)?.message.includes('NOSCRIPT')) {
         this.scriptSha = undefined;
         return await this.executeScript(this.algorithm.script, keys, args);
       }
 
-      // Re-throw if it's not a NOSCRIPT error
       throw error;
     }
+  }
+
+  /**
+   * Manually resets/unblocks a client by deleting its keys (rate and block keys).
+   * @param key The client key
+   * @param throttlerName The throttler name
+   */
+  async reset(key: string, throttlerName: string): Promise<void> {
+    const rateKey = `${this.prefix}:{${key}}:${throttlerName}`;
+    const blockKey = `${rateKey}:block`;
+    await this.client.del([rateKey, blockKey]);
   }
 
   private isSha1Hash(value: string): boolean {
