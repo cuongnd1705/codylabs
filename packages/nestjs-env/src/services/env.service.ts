@@ -7,7 +7,10 @@ import { NestedValueOf, Paths } from '../interfaces';
 export class EnvService<T extends Record<string, any> = Record<string, any>> {
   private readonly logger = new Logger(EnvService.name);
 
-  constructor(@Inject(ENV_CONFIG) private readonly config: T) {}
+  constructor(
+    @Inject(ENV_CONFIG)
+    private readonly config: T,
+  ) {}
 
   /**
    * Get a configuration value by path with type safety
@@ -79,8 +82,10 @@ export class EnvService<T extends Record<string, any> = Record<string, any>> {
 
     try {
       return parser(value);
-    } catch (error: any) {
-      throw new Error(`Configuration parsing failed for ${path}: ${error.message}`, { cause: error });
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : String(error);
+
+      throw new Error(`Configuration parsing failed for ${path}: ${message}`, { cause: error });
     }
   }
 
