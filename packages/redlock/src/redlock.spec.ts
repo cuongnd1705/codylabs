@@ -1,13 +1,17 @@
 import type { RedisClientType } from 'redis';
+
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { InvalidParameterError } from './errors.js';
-import { Redlock } from './redlock.js';
+
+import { InvalidParameterError } from './errors';
+import { Redlock } from './redlock';
 
 // Helper to create mock Redis clients
 function createMockRedisClient(isReady = true) {
   return {
     isReady,
     eval: vi.fn(),
+    evalSha: vi.fn().mockRejectedValue(new Error('NOSCRIPT No matching script. Please use EVAL.')),
+    quit: vi.fn().mockResolvedValue('OK'),
   } as unknown as RedisClientType;
 }
 
@@ -64,7 +68,17 @@ describe('Redlock', () => {
       }).toThrow(InvalidParameterError);
 
       expect(() => {
+        new Redlock(mockClients as RedisClientType[], { retryJitterMs: -50 });
+      }).toThrow(InvalidParameterError);
+
+      // -1 is valid (means unlimited retries)
+      expect(() => {
         new Redlock(mockClients as RedisClientType[], { maxRetryAttempts: -1 });
+      }).not.toThrow();
+
+      // Values below -1 are invalid
+      expect(() => {
+        new Redlock(mockClients as RedisClientType[], { maxRetryAttempts: -2 });
       }).toThrow(InvalidParameterError);
     });
   });
@@ -80,19 +94,16 @@ describe('Redlock', () => {
       // Access private method for testing
       const calculateEffectiveValidity = (
         redlock as unknown as {
-          calculateEffectiveValidity: (
-            ttlMs: number,
-            elapsedMs: number,
-          ) => number;
+          calculateEffectiveValidity: (ttlMs: number, elapsedMs: number) => number;
         }
       ).calculateEffectiveValidity.bind(redlock);
 
       const ttlMs = 10000; // 10 seconds
       const elapsedMs = 1000; // 1 second
 
-      // Expected: 10000 - 1000 - (0.01 * 10000) = 8900ms
+      // Expected: 10000 - 1000 - (0.01 * 10000 + 2) = 8898ms
       const result = calculateEffectiveValidity(ttlMs, elapsedMs);
-      expect(result).toBe(8900);
+      expect(result).toBe(8898);
     });
 
     it('should generate random retry delays', () => {
@@ -101,9 +112,9 @@ describe('Redlock', () => {
         retryJitterMs: 100,
       });
 
-      const generateRetryDelay = (
-        redlock as unknown as { generateRetryDelay: () => number }
-      ).generateRetryDelay.bind(redlock);
+      const generateRetryDelay = (redlock as unknown as { generateRetryDelay: () => number }).generateRetryDelay.bind(
+        redlock,
+      );
 
       const delay1 = generateRetryDelay();
       const delay2 = generateRetryDelay();
@@ -143,10 +154,7 @@ describe('Redlock', () => {
     it('should validate timing constraints', () => {
       const isTimingValid = (
         redlock as unknown as {
-          isTimingValid: (params: {
-            ttlMs: number;
-            elapsedTime: number;
-          }) => boolean;
+          isTimingValid: (params: { ttlMs: number; elapsedTime: number }) => boolean;
         }
       ).isTimingValid.bind(redlock);
 
@@ -161,11 +169,7 @@ describe('Redlock', () => {
     it('should evaluate acquisition attempts correctly', () => {
       const evaluateAcquisitionAttempt = (
         redlock as unknown as {
-          evaluateAcquisitionAttempt: (params: {
-            successCount: number;
-            ttlMs: number;
-            elapsedTime: number;
-          }) => {
+          evaluateAcquisitionAttempt: (params: { successCount: number; ttlMs: number; elapsedTime: number }) => {
             success: boolean;
             effectiveValidityMs?: number;
             failureReason?: string;
@@ -182,7 +186,7 @@ describe('Redlock', () => {
 
       const successResult = evaluateAcquisitionAttempt(successfulAttempt);
       expect(successResult.success).toBe(true);
-      expect(successResult.effectiveValidityMs).toBe(8900); // 10000 - 1000 - 100
+      expect(successResult.effectiveValidityMs).toBe(8898); // 10000 - 1000 - (100 + 2)
 
       // Failed attempt - insufficient consensus
       const failedConsensusAttempt = {
@@ -191,9 +195,7 @@ describe('Redlock', () => {
         elapsedTime: 1000,
       };
 
-      const consensusResult = evaluateAcquisitionAttempt(
-        failedConsensusAttempt,
-      );
+      const consensusResult = evaluateAcquisitionAttempt(failedConsensusAttempt);
       expect(consensusResult.success).toBe(false);
       expect(consensusResult.failureReason).toContain('Insufficient consensus');
 
@@ -206,9 +208,7 @@ describe('Redlock', () => {
 
       const timingResult = evaluateAcquisitionAttempt(failedTimingAttempt);
       expect(timingResult.success).toBe(false);
-      expect(timingResult.failureReason).toContain(
-        'Timing constraint violated',
-      );
+      expect(timingResult.failureReason).toContain('Timing constraint violated');
     });
   });
 
@@ -218,9 +218,9 @@ describe('Redlock', () => {
     });
 
     it('should validate token parameter', () => {
-      const validateToken = (
-        redlock as unknown as { validateToken: (token: unknown) => void }
-      ).validateToken.bind(redlock);
+      const validateToken = (redlock as unknown as { validateToken: (token: unknown) => void }).validateToken.bind(
+        redlock,
+      );
 
       expect(() => validateToken('valid-token')).not.toThrow();
       expect(() => validateToken('')).toThrow(InvalidParameterError);
@@ -230,17 +230,13 @@ describe('Redlock', () => {
     });
 
     it('should validate TTL parameter', () => {
-      const validateTtl = (
-        redlock as unknown as { validateTtl: (ttl: unknown) => void }
-      ).validateTtl.bind(redlock);
+      const validateTtl = (redlock as unknown as { validateTtl: (ttl: unknown) => void }).validateTtl.bind(redlock);
 
       expect(() => validateTtl(1000)).not.toThrow();
       expect(() => validateTtl(0)).toThrow(InvalidParameterError);
       expect(() => validateTtl(-1000)).toThrow(InvalidParameterError);
       expect(() => validateTtl(1.5)).toThrow(InvalidParameterError);
-      expect(() => validateTtl('1000' as unknown)).toThrow(
-        InvalidParameterError,
-      );
+      expect(() => validateTtl('1000' as unknown)).toThrow(InvalidParameterError);
     });
   });
 });

@@ -2,8 +2,8 @@ import type { RedisClientType } from 'redis';
 
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { InvalidParameterError } from './errors.js';
-import { Redlock, RedlockInstance } from './redlock.js';
+import { InvalidParameterError } from './errors';
+import { Redlock, RedlockInstance } from './redlock';
 
 // Mock Redis client
 const createMockRedisClient = (): RedisClientType =>
@@ -19,6 +19,8 @@ const createMockRedisClient = (): RedisClientType =>
         return Promise.resolve(options.keys.length);
       }
     }),
+    evalSha: vi.fn().mockRejectedValue(new Error('NOSCRIPT No matching script. Please use EVAL.')),
+    quit: vi.fn().mockResolvedValue('OK'),
   }) as any;
 
 describe('Redlock Multi-Resource Support', () => {

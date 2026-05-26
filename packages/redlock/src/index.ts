@@ -1,3 +1,3 @@
-export { Redlock, type RedlockInstance } from './redlock.js';
-export type { RedlockOptions } from './types.js';
-export { RedisConnectionError, InvalidParameterError } from './errors.js';
+export { Redlock, type RedlockInstance } from './redlock';
+export type { RedlockOptions, AcquireOptions, WithLockOptions } from './types';
+export { RedisConnectionError, InvalidParameterError } from './errors';

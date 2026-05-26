@@ -2,14 +2,16 @@ import type { RedisClientType } from 'redis';
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { InvalidParameterError } from './errors.js';
-import { Redlock } from './redlock.js';
+import { InvalidParameterError } from './errors';
+import { Redlock } from './redlock';
 
 // Helper to create mock Redis clients
 function createMockRedisClient(isReady = true) {
   return {
     isReady,
     eval: vi.fn(),
+    evalSha: vi.fn().mockRejectedValue(new Error('NOSCRIPT No matching script. Please use EVAL.')),
+    quit: vi.fn().mockResolvedValue('OK'),
   } as unknown as RedisClientType;
 }
 
@@ -48,7 +50,7 @@ describe('Redlock withLock functionality', () => {
 
     expect(result).toBe('test result');
     expect(testFunction).toHaveBeenCalledTimes(1);
-    expect(testFunction).toHaveBeenCalledWith(); // No signal parameter in new API
+    expect(testFunction).toHaveBeenCalledWith(expect.any(AbortSignal));
   });
 
   it('should release lock even when function throws', async () => {
@@ -100,7 +102,7 @@ describe('Redlock withLock functionality', () => {
 
     expect(result).toBe('result');
     expect(testFunction).toHaveBeenCalledTimes(1);
-    expect(testFunction).toHaveBeenCalledWith(); // No signal parameter
+    expect(testFunction).toHaveBeenCalledWith(expect.any(AbortSignal)); // signal passed from withLock
   });
 
   it('should validate ttlMs parameter', async () => {

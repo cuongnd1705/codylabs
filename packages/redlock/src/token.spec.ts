@@ -1,4 +1,6 @@
-import { generateToken } from './token.js';
+import { describe, expect, it } from 'vitest';
+
+import { generateToken } from './token';
 
 describe('generateToken', () => {
   it('should generate a base64-encoded token', () => {

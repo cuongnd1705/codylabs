@@ -1,28 +1,17 @@
 import { type RedisClientType, createClient } from 'redis';
-import {
-  afterAll,
-  afterEach,
-  beforeAll,
-  beforeEach,
-  describe,
-  expect,
-  it,
-} from 'vitest';
-import { Redlock, RedlockInstance } from './redlock.js';
+import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from 'vitest';
+
+import { Redlock, RedlockInstance } from './redlock';
 
 // Helper function to parse REDIS_HOSTS environment variable
 function getRedisConfig(): Array<{ host: string; port: number }> {
-  const redisHosts =
-    process.env.REDIS_HOSTS ??
-    'localhost,localhost,localhost,localhost,localhost';
+  const redisHosts = process.env.REDIS_HOSTS ?? 'localhost,localhost,localhost,localhost,localhost';
   const redisPorts = process.env.REDIS_PORTS ?? '6379,6380,6381,6382,6383';
 
   const hosts = redisHosts.split(',').map((host) => host.trim());
   const ports = redisPorts.split(',').map((port) => parseInt(port.trim(), 10));
   if (hosts.length !== ports.length) {
-    throw new Error(
-      'REDIS_HOSTS and REDIS_PORTS must have the same number of entries',
-    );
+    throw new Error('REDIS_HOSTS and REDIS_PORTS must have the same number of entries');
   }
 
   return hosts.map((host, index) => ({
@@ -154,13 +143,7 @@ describe('Redlock Integration Tests', () => {
       // Try to extend with wrong token by creating a fake RedlockInstance
       const fakeToken = 'invalid-token';
       const fakeExpiresAt = new Date(Date.now() + TEST_TTL);
-      const fakeLock = new RedlockInstance(
-        redlock,
-        key,
-        fakeToken,
-        fakeExpiresAt,
-        TEST_TTL,
-      );
+      const fakeLock = new RedlockInstance(redlock, key, fakeToken, fakeExpiresAt, TEST_TTL);
 
       // This should fail because the token is invalid
       const extended = await fakeLock.extend();
@@ -254,9 +237,7 @@ describe('Redlock Integration Tests', () => {
 
       setTimeout(async () => {
         // Reconnect the disconnected clients
-        await Promise.allSettled(
-          clientsToDisconnect.map((client) => client.connect()),
-        );
+        await Promise.allSettled(clientsToDisconnect.map((client) => client.connect()));
       }, 200); // Wait for 200 ms to allow reconnection
 
       const lock = await lock2.acquire(key, TEST_TTL);
@@ -537,23 +518,15 @@ describe('Redlock Integration Tests', () => {
       const key = generateTestKey();
 
       // Test invalid key
-      await expect(
-        redlock.withLock('', TEST_TTL, async () => 'test'),
-      ).rejects.toThrow();
+      await expect(redlock.withLock('', TEST_TTL, async () => 'test')).rejects.toThrow();
 
       // Test invalid TTL
-      await expect(
-        redlock.withLock(key, 0, async () => 'test'),
-      ).rejects.toThrow();
+      await expect(redlock.withLock(key, 0, async () => 'test')).rejects.toThrow();
 
-      await expect(
-        redlock.withLock(key, -1000, async () => 'test'),
-      ).rejects.toThrow();
+      await expect(redlock.withLock(key, -1000, async () => 'test')).rejects.toThrow();
 
       // Test invalid function
-      await expect(
-        redlock.withLock(key, TEST_TTL, null as any),
-      ).rejects.toThrow();
+      await expect(redlock.withLock(key, TEST_TTL, null as any)).rejects.toThrow();
     });
 
     it('should work with async functions that return promises', async () => {

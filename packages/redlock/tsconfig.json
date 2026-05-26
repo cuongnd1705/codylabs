@@ -4,6 +4,7 @@
   "compilerOptions": {
     "emitDecoratorMetadata": false,
     "incremental": false,
+    "lib": ["esnext"],
     "outDir": "dist",
     "rootDir": "./src",
     "types": ["node"]

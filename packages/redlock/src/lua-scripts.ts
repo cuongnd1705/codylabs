@@ -1,3 +1,5 @@
+import { createHash } from 'node:crypto';
+
 /**
  * Lua script for atomically acquiring locks on multiple resources.
  *
@@ -89,3 +91,12 @@ end
 
 return 1
 `.trim();
+
+/**
+ * Pre-computed SHA1 hashes for EVALSHA caching.
+ * These allow Redis to execute already-loaded scripts by hash instead of
+ * sending the full script text on every call.
+ */
+export const ACQUIRE_SCRIPT_SHA = createHash('sha1').update(ACQUIRE_SCRIPT).digest('hex');
+export const RELEASE_SCRIPT_SHA = createHash('sha1').update(RELEASE_SCRIPT).digest('hex');
+export const EXTEND_SCRIPT_SHA = createHash('sha1').update(EXTEND_SCRIPT).digest('hex');

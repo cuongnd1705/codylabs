@@ -8,8 +8,8 @@
  */
 export class RedisConnectionError extends Error {
   constructor(operation: string, cause?: Error) {
-    super(`Redis operation '${operation}' failed: ${cause?.message || 'Unknown error'}`, cause);
-    this.name = 'RedisLockError';
+    super(`Redis operation '${operation}' failed: ${cause?.message || 'Unknown error'}`, { cause });
+    this.name = 'RedisConnectionError';
   }
 }
 
@@ -24,6 +24,6 @@ export class RedisConnectionError extends Error {
 export class InvalidParameterError extends Error {
   constructor(parameter: string, value: unknown, expectedType: string) {
     super(`Invalid ${parameter}: expected ${expectedType}, got ${typeof value} (${value})`);
-    this.name = 'RedisLockError';
+    this.name = 'InvalidParameterError';
   }
 }
