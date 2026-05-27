@@ -1,3 +1,4 @@
 export { RedlockModule } from './redlock.module';
-export { RedlockService } from './services/redlock.service';
-export { Redlock } from './redlock.decorator';
+export { RedlockService } from './services';
+export { Redlock } from './decorators';
+export type { RedlockOptions, WithLockOptions } from '@codylabs/redlock';

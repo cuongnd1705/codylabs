@@ -1,7 +1,7 @@
 {
   "name": "@codylabs/nestjs-redlock",
   "version": "0.0.1",
-  "description": "Redis-based distributed lock module for NestJS, built on @redis-kit/lock",
+  "description": "Redis-based distributed lock module for NestJS, built on @codylabs/redlock",
   "license": "MIT",
   "author": "Cody Nguyen",
   "files": [
@@ -9,6 +9,13 @@
   ],
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "require": "./dist/index.js",
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
   "publishConfig": {
     "access": "public"
   },
@@ -24,6 +31,7 @@
     "@nestjs/testing": "^11.0.0"
   },
   "peerDependencies": {
+    "@codylabs/redlock": "workspace:*",
     "@nestjs/common": "^10.0.0 || ^11.0.0",
     "redis": "^5.0.0"
   }

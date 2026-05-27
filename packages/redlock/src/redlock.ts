@@ -1,6 +1,4 @@
-import type { RedisClientType } from 'redis';
-
-import type { AcquireOptions, RedlockOptions, WithLockOptions } from './types';
+import type { AcquireOptions, RedisClientLike, RedlockOptions, WithLockOptions } from './types';
 
 import { InvalidParameterError } from './errors';
 import {
@@ -305,14 +303,14 @@ export class Redlock {
    * @internal
    */
   [INTERNAL_ACCESS]: RedlockInternalAccess;
-  private readonly clients: RedisClientType[];
+  private readonly clients: RedisClientLike[];
   private readonly quorum: number;
   private readonly driftFactor: number;
   private readonly retryDelayMs: number;
   private readonly retryJitterMs: number;
   private readonly maxRetryAttempts: number;
 
-  constructor(redisClients: RedisClientType[], options: RedlockOptions = {}) {
+  constructor(redisClients: RedisClientLike[], options: RedlockOptions = {}) {
     if (!Array.isArray(redisClients) || redisClients.length === 0) {
       throw new InvalidParameterError('redisClients', redisClients, 'non-empty array of Redis clients');
     }
@@ -536,7 +534,7 @@ export class Redlock {
   }
 
   private async acquireOnInstance(
-    client: RedisClientType,
+    client: RedisClientLike,
     keys: string[],
     token: string,
     ttlMs: number,
@@ -552,7 +550,7 @@ export class Redlock {
     }
   }
 
-  private async releaseOnInstance(client: RedisClientType, keys: string[], token: string): Promise<boolean> {
+  private async releaseOnInstance(client: RedisClientLike, keys: string[], token: string): Promise<boolean> {
     try {
       const result = await this.evalScript<number>(client, RELEASE_SCRIPT, RELEASE_SCRIPT_SHA, keys, [token]);
       return result > 0;
@@ -562,7 +560,7 @@ export class Redlock {
   }
 
   private async extendOnInstance(
-    client: RedisClientType,
+    client: RedisClientLike,
     keys: string[],
     token: string,
     ttlMs: number,
@@ -583,7 +581,7 @@ export class Redlock {
    * performance, falling back to EVAL if the script is not yet cached.
    */
   private async evalScript<T>(
-    client: RedisClientType,
+    client: RedisClientLike,
     script: string,
     sha: string,
     keys: string[],
@@ -607,7 +605,7 @@ export class Redlock {
    * is determined (quorum achieved or quorum impossible), without waiting for
    * all slow/failing nodes to respond.
    */
-  private runOnClients(fn: (client: RedisClientType) => Promise<boolean>): Promise<number> {
+  private runOnClients(fn: (client: RedisClientLike) => Promise<boolean>): Promise<number> {
     return new Promise((resolve) => {
       let successes = 0;
       let failures = 0;
@@ -745,6 +743,6 @@ export class Redlock {
    * Gracefully closes all Redis client connections managed by this instance.
    */
   async quit(): Promise<void> {
-    await Promise.allSettled(this.clients.map((client) => client.quit()));
+    await Promise.allSettled(this.clients.map((client) => client.close()));
   }
 }

@@ -4,13 +4,13 @@ import { Injectable } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { createClient } from 'redis';
 
+import { REDLOCK_SERVICE_KEY } from '../constants';
+import { RedlockModule } from '../redlock.module';
 import { Redlock } from './redlock.decorator';
-import { RedlockModule } from './redlock.module';
-import { RedlockService } from './redlock.service';
 
 // Mock RedlockService
 const mockRedlockService = {
-  withLock: jest.fn().mockImplementation((keys, ttl, callback) => callback()),
+  withLock: jest.fn().mockImplementation((_keys: string[], _ttl: number, callback: () => unknown) => callback()),
 };
 
 describe('@Redlock Decorator Validations', () => {
@@ -32,7 +32,6 @@ describe('@Redlock Decorator Validations', () => {
   it('should preserve function length (arity)', () => {
     class TestService {
       @Redlock(['testKey'], 200)
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       async testMethod(_param1: string, _param2: number) {
         return 'locked';
       }
@@ -56,7 +55,7 @@ describe('@Redlock Decorator Validations', () => {
     class TestService {
       constructor() {
         // Mock the injected service
-        (this as Record<string, unknown>)[RedlockService.name] = mockRedlockService;
+        (this as any)[REDLOCK_SERVICE_KEY] = mockRedlockService;
       }
 
       @Redlock(['testKey'], 200)
@@ -68,13 +67,13 @@ describe('@Redlock Decorator Validations', () => {
     const service = new TestService();
     const result = await service.getValue();
     expect(result).toBe(42);
-    expect(mockRedlockService.withLock).toHaveBeenCalledWith(['testKey'], 200, expect.any(Function));
+    expect(mockRedlockService.withLock).toHaveBeenCalledWith(['testKey'], 200, expect.any(Function), undefined);
   });
 
   it('should handle methods that throw errors', async () => {
     class TestService {
       constructor() {
-        (this as Record<string, unknown>)[RedlockService.name] = mockRedlockService;
+        (this as any)[REDLOCK_SERVICE_KEY] = mockRedlockService;
       }
 
       @Redlock(['testKey'], 200)
@@ -105,7 +104,7 @@ describe('@Redlock Decorator Validations', () => {
   it('should preserve custom properties on methods', () => {
     class TestService {
       constructor() {
-        (this as Record<string, unknown>)[RedlockService.name] = mockRedlockService;
+        (this as any)[REDLOCK_SERVICE_KEY] = mockRedlockService;
       }
 
       @Redlock(['testKey'], 200)
@@ -126,7 +125,7 @@ describe('@Redlock Decorator Validations', () => {
   it('should maintain type safety', () => {
     class TestService {
       constructor() {
-        (this as Record<string, unknown>)[RedlockService.name] = mockRedlockService;
+        (this as any)[REDLOCK_SERVICE_KEY] = mockRedlockService;
       }
 
       @Redlock(['testKey'], 200)
@@ -145,7 +144,7 @@ describe('@Redlock Decorator Validations', () => {
   it('should handle synchronous methods correctly', async () => {
     class TestService {
       constructor() {
-        (this as Record<string, unknown>)[RedlockService.name] = mockRedlockService;
+        (this as any)[REDLOCK_SERVICE_KEY] = mockRedlockService;
       }
 
       @Redlock(['testKey'], 200)
@@ -163,7 +162,7 @@ describe('@Redlock Decorator Validations', () => {
   it('should detect async methods correctly', async () => {
     class TestService {
       constructor() {
-        (this as Record<string, unknown>)[RedlockService.name] = mockRedlockService;
+        (this as any)[REDLOCK_SERVICE_KEY] = mockRedlockService;
       }
 
       @Redlock(['testKey'], 200)
@@ -196,7 +195,7 @@ describe('@Redlock Decorator Validations', () => {
   it('should handle null/undefined RedlockService', async () => {
     class TestService {
       constructor() {
-        (this as Record<string, unknown>)[RedlockService.name] = null;
+        (this as any)[REDLOCK_SERVICE_KEY] = null;
       }
 
       @Redlock(['testKey'], 200)

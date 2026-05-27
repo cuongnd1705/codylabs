@@ -1,3 +1,10 @@
+import type { RedisClientType, RedisClusterType, RedisSentinelType } from 'redis';
+
+/**
+ * A Redis client compatible with Redlock: standard client, cluster, or sentinel.
+ */
+export type RedisClientLike = RedisClientType | RedisClusterType | RedisSentinelType;
+
 /**
  * Configuration options for Redlock distributed locking.
  */

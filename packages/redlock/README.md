@@ -204,6 +204,43 @@ lock.resourceKeys; // string[] of locked keys
 await redlock.quit();
 ```
 
+### Using Redis Cluster or Sentinel
+
+`Redlock` accepts `RedisClientType`, `RedisClusterType`, and `RedisSentinelType` from the `redis` package.
+
+**Redis Cluster** — the cluster handles replication internally, so a single cluster client counts as one Redlock node:
+
+```typescript
+import { createCluster } from 'redis';
+
+const cluster = createCluster({
+  rootNodes: [{ url: 'redis://node1:6379' }, { url: 'redis://node2:6379' }, { url: 'redis://node3:6379' }],
+});
+await cluster.connect();
+
+const redlock = new Redlock([cluster]);
+```
+
+**Redis Sentinel** — Sentinel provides HA for a single logical instance, also treated as one Redlock node:
+
+```typescript
+import { createSentinel } from 'redis';
+
+const sentinel = createSentinel({
+  sentinelRootNodes: [
+    { host: 'sentinel1', port: 26379 },
+    { host: 'sentinel2', port: 26379 },
+    { host: 'sentinel3', port: 26379 },
+  ],
+  name: 'mymaster',
+});
+await sentinel.connect();
+
+const redlock = new Redlock([sentinel]);
+```
+
+> **Note**: For the strongest fault tolerance guarantees of the Redlock algorithm, use multiple independent Redis instances (not replicas of each other). A single Cluster or Sentinel client gives HA for one logical node but does not provide cross-node quorum.
+
 ## Configuration
 
 | Option             | Type     | Default | Description                                                                  |

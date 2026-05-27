@@ -1,30 +1,26 @@
+import type { WithLockOptions } from '@codylabs/redlock';
+
 import { Inject } from '@nestjs/common';
 
-import { RedlockService } from '../services/redlock.service';
+import { REDLOCK_SERVICE_KEY } from '../constants';
+import { RedlockService } from '../services';
 
-// 7. Better TypeScript types
 export function Redlock<T extends (...args: any[]) => any>(
   key: string | string[],
-  ttl = 100,
+  ttl: number,
+  options?: WithLockOptions,
 ): (target: any, propertyKey: string | symbol, descriptor: TypedPropertyDescriptor<T>) => void {
   return (target: any, propertyKey: string | symbol, descriptor: TypedPropertyDescriptor<T>) => {
-    const keys = getKeys(key);
-    // Guard against undefined descriptor
     if (!descriptor || typeof descriptor.value !== 'function') {
       throw new Error(`@Redlock can only be applied to methods. Property ${String(propertyKey)} is not a method.`);
     }
 
-    Inject(RedlockService)(target, RedlockService.name);
+    Inject(RedlockService)(target, REDLOCK_SERVICE_KEY as unknown as string);
 
     const originalMethod = descriptor.value;
 
-    // Create wrapper method (always async since redlock operations are async)
     const wrappedMethod = async function (this: any, ...args: any[]) {
-      // eslint-disable-next-line @typescript-eslint/no-this-alias
-      const that = this;
-
-      // 9. Dependency injection edge case handling
-      const redlockService = (this as any)[RedlockService.name] as RedlockService;
+      const redlockService = (this as any)[REDLOCK_SERVICE_KEY] as RedlockService;
 
       if (!redlockService) {
         throw new Error(
@@ -32,37 +28,34 @@ export function Redlock<T extends (...args: any[]) => any>(
         );
       }
 
-      return await redlockService.withLock(keys, ttl, () => originalMethod.apply(that, args));
+      const fn = () => originalMethod.apply(this, args);
+      if (Array.isArray(key)) {
+        return await redlockService.withLock(key, ttl, fn, options);
+      } else {
+        return await redlockService.withLock(key, ttl, fn, options);
+      }
     };
 
-    // Metadata preservation
-    // 1. Preserve the original method name
     Object.defineProperty(wrappedMethod, 'name', {
       value: originalMethod.name,
       configurable: true,
     });
 
-    // 2. Preserve the original method's parameter count (arity)
     Object.defineProperty(wrappedMethod, 'length', {
       value: originalMethod.length,
       configurable: true,
     });
 
-    // 3. Copy prototype properties if needed
-    Object.setPrototypeOf(wrappedMethod, Object.getPrototypeOf(originalMethod));
-
-    // 4. Preserve custom properties
     const originalPropertyNames = Object.getOwnPropertyNames(originalMethod);
-    for (const key of originalPropertyNames) {
-      if (key !== 'name' && key !== 'length' && key !== 'prototype') {
+    for (const propName of originalPropertyNames) {
+      if (propName !== 'name' && propName !== 'length' && propName !== 'prototype') {
         try {
-          const descriptor = Object.getOwnPropertyDescriptor(originalMethod, key);
-          if (descriptor) {
-            Object.defineProperty(wrappedMethod, key, descriptor);
+          const propDescriptor = Object.getOwnPropertyDescriptor(originalMethod, propName);
+          if (propDescriptor) {
+            Object.defineProperty(wrappedMethod, propName, propDescriptor);
           }
         } catch {
-          // 5. Some properties might not be configurable, skip them
-          console.warn(`Could not copy property ${key} from original method`);
+          // Some properties may not be configurable — skip silently
         }
       }
     }
@@ -70,14 +63,4 @@ export function Redlock<T extends (...args: any[]) => any>(
     descriptor.value = wrappedMethod as T;
     return descriptor;
   };
-}
-
-function getKeys(key: string | string[]): string[] {
-  if (Array.isArray(key)) {
-    return key;
-  } else if (typeof key === 'string') {
-    return [key];
-  } else {
-    throw new Error(`Invalid key type: ${typeof key}. Expected string or string[].`);
-  }
 }

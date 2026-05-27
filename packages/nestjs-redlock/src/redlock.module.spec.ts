@@ -21,7 +21,8 @@ describe('RedisModule Integration forRoot', () => {
   });
 
   afterAll(async () => {
-    await Promise.all(redisClients.map((client) => client.quit()));
+    // Use allSettled — onModuleDestroy may have already closed clients via module.close()
+    await Promise.allSettled(redisClients.map((client) => client.quit()));
   });
 
   describe('RedlockModule.forRoot', () => {

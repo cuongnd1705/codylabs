@@ -1,15 +1,13 @@
-import type { RedlockOptions } from '@redis-kit/lock';
-import type { RedisClientType, RedisClusterType, RedisSentinelType } from 'redis';
-
-type RedisInstance = RedisClientType | RedisClusterType | RedisSentinelType;
+import type { RedisClientLike, RedlockOptions } from '@codylabs/redlock';
 
 /**
  * Redis module configuration options.
  * Contains Redis clients array and lock-specific configuration.
  */
 export interface RedlockModuleOptions {
-  /** Array of Redis clients for distributed locking */
-  clients: RedisInstance[];
+  /** Array of independent Redis clients for distributed locking (not replicas). Accepts standard client, cluster, or sentinel. */
+  clients: RedisClientLike[];
+
   /** Lock configuration options */
   redlockConfig?: RedlockOptions;
 }
