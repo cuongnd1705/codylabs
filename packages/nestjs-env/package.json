@@ -1,6 +1,6 @@
 {
   "name": "@codylabs/nestjs-env",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "description": "Environment variable module for NestJS",
   "license": "MIT",
   "author": "Cody Nguyen",
