@@ -1,11 +1,8 @@
 import { SetMetadata, applyDecorators } from '@nestjs/common';
 
-import { SchedulerType } from '../enums/scheduler-type.enum';
-import { SCHEDULER_NAME, SCHEDULER_TYPE, SCHEDULE_CRON_OPTIONS } from '../schedule.constants';
+import { SCHEDULER_NAME, SCHEDULER_TYPE, SCHEDULE_CRON_OPTIONS } from '../constants';
+import { SchedulerType } from '../enums';
 
-/**
- * @publicApi
- */
 export type CronOptions = {
   /**
    * Specify the name of your cron job. This will allow to inject your cron job reference through `@InjectCronRef`.
@@ -49,11 +46,10 @@ export type CronOptions = {
  * Creates a scheduled job.
  * @param cronTime The time to fire off your job as a cron expression string (e.g. `"* * * * *"`).
  * @param options Job execution options.
- *
- * @publicApi
  */
 export function Cron(cronTime: string, options: CronOptions = {}): MethodDecorator {
   const name = options?.name;
+
   return applyDecorators(
     SetMetadata(SCHEDULE_CRON_OPTIONS, {
       ...options,

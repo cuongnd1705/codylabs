@@ -3,8 +3,8 @@ import type { RedisClientType } from 'redis';
 import { Test } from '@nestjs/testing';
 import { createClient } from 'redis';
 
-import { SCHEDULE_MODULE_OPTIONS } from '../schedule.constants.js';
-import { RedisJobStore } from './redis-job-store.service.js';
+import { SCHEDULE_MODULE_OPTIONS } from '../constants';
+import { RedisJobStore } from '../redis';
 
 describe('RedisJobStore (integration)', () => {
   let client: RedisClientType;
@@ -67,13 +67,14 @@ describe('RedisJobStore (integration)', () => {
   });
 
   describe('claimDueJob', () => {
-    it('returns the job name and removes it from ZSET when due', async () => {
+    it('returns the job name and score, and removes it from ZSET when due', async () => {
       const now = await store.getTime();
       await client.zAdd('test:jobs', { score: now - 100, value: 'job1' });
 
       const result = await store.claimDueJob(now);
 
-      expect(result).toBe('job1');
+      expect(result).toMatchObject({ name: 'job1' });
+      expect(result?.score).toBeCloseTo(now - 100, -1);
       expect(await client.zScore('test:jobs', 'job1')).toBeNull();
     });
 
@@ -107,7 +108,7 @@ describe('RedisJobStore (integration)', () => {
       await client.scriptFlush();
 
       await client.zAdd('test:jobs', { score: now - 10, value: 'job2' });
-      expect(await store.claimDueJob(now)).toBe('job2');
+      expect(await store.claimDueJob(now)).toMatchObject({ name: 'job2' });
     });
   });
 

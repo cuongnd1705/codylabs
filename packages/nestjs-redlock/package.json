@@ -28,7 +28,7 @@
   },
   "devDependencies": {
     "@codylabs/typescript-configs": "workspace:*",
-    "@nestjs/testing": "^11.0.0"
+    "@nestjs/testing": "^11.1.24"
   },
   "peerDependencies": {
     "@codylabs/redlock": "workspace:*",

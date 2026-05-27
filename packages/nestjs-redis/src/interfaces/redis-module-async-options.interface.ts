@@ -5,8 +5,6 @@ import { RedisOptionsFactory } from './redis-options-factory.interface';
 
 /**
  * Options for dynamically configuring the Redis module.
- *
- * @publicApi
  */
 export interface RedisModuleAsyncOptions extends ConfigurableModuleAsyncOptions<
   RedisModuleOptions,

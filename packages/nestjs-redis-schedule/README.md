@@ -4,24 +4,41 @@ Drop-in replacement for `@nestjs/schedule` with Redis-backed distributed cron ex
 
 ## Features
 
-- Drop-in replacement - Same `@Cron`, `@Interval`, `@Timeout` decorators and other APIs as `@nestjs/schedule`
-- Distributed cron execution - Redis locking guarantees a job fires on exactly one instance per tick
-- Redis persistence for cron jobs - schedules survive process restarts
-- Works with existing `@codylabs/nestjs-redis-client` connections
+- **Drop-in replacement** — same `@Cron`, `@Interval`, `@Timeout` decorators and `SchedulerRegistry` API as `@nestjs/schedule`
+- **Distributed cron execution** — Redis ZSET + atomic Lua script guarantees exactly one instance fires per tick
+- **Persistence across restarts** — next-run timestamps are stored in Redis; missed jobs caught on startup
+- **Missed-execution handling** — configurable threshold distinguishes catchup executions from truly-stale skips
+- **Works with any `redis` v5 client** — `RedisClientType`, `RedisClusterType`, `RedisSentinelType`
 
 ## Installation
 
 ```sh
 # npm
-npm install @codylabs/nestjs-redis-schedule @codylabs/nestjs-redis-client redis
+npm install @codylabs/nestjs-redis-schedule redis
 
 # pnpm
-pnpm add @codylabs/nestjs-redis-schedule @codylabs/nestjs-redis-client redis
+pnpm add @codylabs/nestjs-redis-schedule redis
 ```
 
-## Usage
+## Setup
 
-### Basic Setup
+### Synchronous
+
+```typescript
+import { Module } from '@nestjs/common';
+import { createClient } from 'redis';
+import { ScheduleModule } from '@codylabs/nestjs-redis-schedule';
+
+const redisClient = createClient({ url: 'redis://localhost:6379' });
+await redisClient.connect();
+
+@Module({
+  imports: [ScheduleModule.forRoot({ client: redisClient })],
+})
+export class AppModule {}
+```
+
+### Asynchronous (recommended)
 
 ```typescript
 import { Module } from '@nestjs/common';
@@ -40,7 +57,22 @@ import { ScheduleModule } from '@codylabs/nestjs-redis-schedule';
 export class AppModule {}
 ```
 
-### Cron Jobs
+## Module options
+
+| Option            | Type                                                       | Default      | Description                                                 |
+| ----------------- | ---------------------------------------------------------- | ------------ | ----------------------------------------------------------- |
+| `client`          | `RedisClientType \| RedisClusterType \| RedisSentinelType` | **required** | Connected Redis client                                      |
+| `keyPrefix`       | `string`                                                   | `'schedule'` | Prefix for all Redis keys created by this module            |
+| `shutdownTimeout` | `number`                                                   | `5000`       | Max ms to wait for in-flight handlers to finish on shutdown |
+| `cronJobs`        | `boolean`                                                  | `true`       | Enable `@Cron` discovery                                    |
+| `intervals`       | `boolean`                                                  | `true`       | Enable `@Interval` discovery                                |
+| `timeouts`        | `boolean`                                                  | `true`       | Enable `@Timeout` discovery                                 |
+
+## Decorators
+
+### `@Cron(expression, options?)`
+
+Schedules a method as a distributed cron job. Only one instance in the cluster will execute the handler per tick.
 
 ```typescript
 import { Injectable } from '@nestjs/common';
@@ -50,21 +82,107 @@ import { Cron, CronExpression } from '@codylabs/nestjs-redis-schedule';
 export class TasksService {
   @Cron(CronExpression.EVERY_MINUTE)
   handleCron() {
-    // runs on exactly one instance per tick, even with many replicas
+    // runs on exactly one instance per tick
+  }
+
+  @Cron('0 9 * * MON-FRI', { name: 'weekday-report', timeZone: 'America/New_York' })
+  handleWeekdayReport() {}
+
+  @Cron('0 0 * * *', { utcOffset: 330 }) // UTC+5:30
+  handleMidnightIST() {}
+}
+```
+
+**`@Cron` options**
+
+| Option      | Type      | Default         | Description                                                                             |
+| ----------- | --------- | --------------- | --------------------------------------------------------------------------------------- |
+| `name`      | `string`  | cron expression | Unique job name; used as the key in `SchedulerRegistry`                                 |
+| `timeZone`  | `string`  | —               | IANA timezone name (e.g. `'America/New_York'`). Mutually exclusive with `utcOffset`     |
+| `utcOffset` | `number`  | —               | UTC offset in **minutes** (e.g. `330` for UTC+5:30). Mutually exclusive with `timeZone` |
+| `disabled`  | `boolean` | `false`         | Skip registration entirely                                                              |
+| `threshold` | `number`  | `250`           | Ms of execution delay before a missed tick is skipped instead of caught up              |
+
+### `@Interval(timeout)` / `@Interval(name, timeout)`
+
+Schedules a method with `setInterval`. Runs on **every** instance — not distributed.
+
+```typescript
+@Interval('health-check', 30_000)
+checkHealth() {}
+```
+
+### `@Timeout(timeout)` / `@Timeout(name, timeout)`
+
+Schedules a method with `setTimeout`. Runs on **every** instance — not distributed.
+
+```typescript
+@Timeout('startup-task', 5_000)
+onStartup() {}
+```
+
+## SchedulerRegistry
+
+Inject `SchedulerRegistry` to manage jobs at runtime.
+
+```typescript
+import { Injectable } from '@nestjs/common';
+import { SchedulerRegistry } from '@codylabs/nestjs-redis-schedule';
+
+@Injectable()
+export class AdminService {
+  constructor(private readonly schedulerRegistry: SchedulerRegistry) {}
+
+  async pauseJob(name: string) {
+    const job = this.schedulerRegistry.getCronJob(name);
+    await job.stop();
+  }
+
+  async resumeJob(name: string) {
+    const job = this.schedulerRegistry.getCronJob(name);
+    await job.start();
+  }
+
+  listJobs() {
+    return [...this.schedulerRegistry.getCronJobs().entries()].map(([name, job]) => ({
+      name,
+      expression: job.expression,
+      nextRun: new Date(job.nextTs),
+    }));
   }
 }
 ```
 
+**`CronJobHandle` interface**
+
+| Member       | Description                                     |
+| ------------ | ----------------------------------------------- |
+| `name`       | Job name                                        |
+| `expression` | Cron expression string                          |
+| `nextTs`     | Unix timestamp (ms) of the next scheduled run   |
+| `start()`    | Re-registers the job in Redis and the poll loop |
+| `stop()`     | Removes the job from Redis and the poll loop    |
+
+**`SchedulerRegistry` methods**
+
+| Method                  | Description                                                        |
+| ----------------------- | ------------------------------------------------------------------ |
+| `getCronJob(name)`      | Returns the `CronJobHandle` for a cron job (throws if not found)   |
+| `getCronJobs()`         | Returns a `Map<string, CronJobHandle>` of all registered cron jobs |
+| `doesExist(type, name)` | Checks whether a `'cron'`, `'interval'`, or `'timeout'` job exists |
+| `deleteCronJob(name)`   | Stops the job and removes it from the registry                     |
+| `addCronJob(name, job)` | Registers an externally-created `CronJobHandle`                    |
+
 ## Migrating from `@nestjs/schedule`
 
-1. Swap the import:
+1. Swap the package:
 
 ```diff
--import { ScheduleModule, Cron } from '@nestjs/schedule';
-+import { ScheduleModule, Cron } from '@codylabs/nestjs-redis-schedule';
+-import { ScheduleModule, Cron, CronExpression } from '@nestjs/schedule';
++import { ScheduleModule, Cron, CronExpression } from '@codylabs/nestjs-redis-schedule';
 ```
 
-2. Pass a Redis client:
+2. Pass a Redis client when importing the module:
 
 ```diff
 -ScheduleModule.forRoot()
@@ -74,7 +192,7 @@ export class TasksService {
 +})
 ```
 
-For full API documentation refer to the [official `@nestjs/schedule` docs](https://docs.nestjs.com/techniques/task-scheduling).
+Everything else (`@Cron`, `@Interval`, `@Timeout`, `SchedulerRegistry`, `CronExpression`) is API-compatible.
 
 > **Note:** `@Interval` and `@Timeout` use native Node.js timers and run on every instance, identical to `@nestjs/schedule`. Only `@Cron` jobs are distributed via Redis.
 

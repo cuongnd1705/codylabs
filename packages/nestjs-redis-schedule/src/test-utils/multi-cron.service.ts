@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 
-import { Cron } from '../decorators/cron.decorator.js';
-import { CronExpression } from '../enums/cron-expression.enum.js';
+import { Cron } from '../decorators/cron.decorator';
+import { CronExpression } from '../enums/cron-expression.enum';
 
 @Injectable()
 export class MultiCronService {

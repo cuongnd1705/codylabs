@@ -1,26 +1,15 @@
 import { BeforeApplicationShutdown, Inject, Injectable, Logger, OnApplicationBootstrap } from '@nestjs/common';
-import { CronExpressionParser } from 'cron-parser';
+import { Cron as CronScheduler } from 'croner';
 
-import type { CronOptions } from './decorators/cron.decorator';
-import type { ScheduleModuleOptions } from './interfaces/schedule-module-options.interface';
+import type { CronOptions } from '../decorators';
+import type { ScheduleModuleOptions } from '../interfaces';
 
-import { RedisJobStore } from './redis/redis-job-store.service';
-import { RedisPollLoop } from './redis/redis-poll-loop.service';
-import { SCHEDULE_MODULE_OPTIONS } from './schedule.constants';
+import { SCHEDULE_MODULE_OPTIONS } from '../constants';
+import { type CronJobEntry, RedisJobStore, RedisPollLoop } from '../redis';
 import { type CronJobHandle, SchedulerRegistry } from './scheduler.registry';
 
 const DEFAULT_THRESHOLD_MS = 250;
 const DEFAULT_SHUTDOWN_TIMEOUT_MS = 5000;
-
-function resolveTimezone(timeZone?: string, utcOffset?: number): string | undefined {
-  if (timeZone) return timeZone;
-  if (utcOffset === undefined) return undefined;
-  const sign = utcOffset >= 0 ? '+' : '-';
-  const abs = Math.abs(utcOffset);
-  const hours = Math.floor(abs / 60);
-  const mins = abs % 60;
-  return mins === 0 ? `UTC${sign}${hours}` : `UTC${sign}${hours}:${String(mins).padStart(2, '0')}`;
-}
 
 interface CronJobDef {
   handler: () => unknown;
@@ -35,11 +24,12 @@ export class SchedulerOrchestrator implements OnApplicationBootstrap, BeforeAppl
   private readonly timeoutRefs: NodeJS.Timeout[] = [];
 
   constructor(
+    @Inject(SCHEDULE_MODULE_OPTIONS)
+    private readonly options: ScheduleModuleOptions,
+
     private readonly store: RedisJobStore,
     private readonly pollLoop: RedisPollLoop,
     private readonly registry: SchedulerRegistry,
-    @Inject(SCHEDULE_MODULE_OPTIONS)
-    private readonly options: ScheduleModuleOptions,
   ) {}
 
   addCron(fn: () => unknown, options: CronOptions & { cronTime: string }): void {
@@ -99,18 +89,12 @@ export class SchedulerOrchestrator implements OnApplicationBootstrap, BeforeAppl
 
       const nextTs = this.computeNext(expression, timeZone, utcOffset);
 
-      const handle = this.createCronJobHandle(name, expression, timeZone, utcOffset, nextTs);
+      const entry: CronJobEntry = { name, expression, timeZone, utcOffset, threshold, handler: def.handler };
+      const handle = this.createCronJobHandle(name, expression, timeZone, utcOffset, nextTs, entry);
       this.registry.addCronJob(name, handle);
 
       if (!def.options.disabled) {
-        this.pollLoop.registerJob({
-          name,
-          expression,
-          timeZone,
-          utcOffset,
-          threshold,
-          handler: def.handler,
-        });
+        this.pollLoop.registerJob(entry);
         await this.store.registerJob(name, expression, nextTs);
       }
     }
@@ -130,11 +114,14 @@ export class SchedulerOrchestrator implements OnApplicationBootstrap, BeforeAppl
   }
 
   private computeNext(expression: string, timeZone?: string, utcOffset?: number): number {
-    const tz = resolveTimezone(timeZone, utcOffset);
-    return CronExpressionParser.parse(expression, tz ? { tz } : undefined)
-      .next()
-      .toDate()
-      .getTime();
+    const next = new CronScheduler(expression, {
+      paused: true,
+      ...(timeZone ? { timezone: timeZone } : utcOffset !== undefined ? { utcOffset } : {}),
+    }).nextRun();
+    if (!next) {
+      throw new Error(`Cron expression "${expression}" has no upcoming runs.`);
+    }
+    return next.getTime();
   }
 
   private createCronJobHandle(
@@ -143,9 +130,11 @@ export class SchedulerOrchestrator implements OnApplicationBootstrap, BeforeAppl
     timeZone: string | undefined,
     utcOffset: number | undefined,
     initialNextTs: number,
+    entry: CronJobEntry,
   ): CronJobHandle {
     let nextTs = initialNextTs;
     const store = this.store;
+    const pollLoop = this.pollLoop;
     const computeNext = this.computeNext.bind(this);
 
     return {
@@ -157,9 +146,11 @@ export class SchedulerOrchestrator implements OnApplicationBootstrap, BeforeAppl
       async start() {
         const newNext = computeNext(expression, timeZone, utcOffset);
         nextTs = newNext;
-        await store.enqueueJob(name, newNext);
+        pollLoop.registerJob(entry);
+        await store.registerJob(name, expression, newNext);
       },
       async stop() {
+        pollLoop.unregisterJob(name);
         await store.removeJob(name);
       },
     };

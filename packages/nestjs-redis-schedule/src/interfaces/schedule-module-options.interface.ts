@@ -3,9 +3,6 @@ import type { RedisClientType, RedisClusterType, RedisSentinelType } from 'redis
 
 type RedisClientLike = RedisClientType | RedisClusterType | RedisSentinelType;
 
-/**
- * @publicApi
- */
 export interface ScheduleModuleOptions {
   client: RedisClientLike;
   keyPrefix?: string;
@@ -15,16 +12,10 @@ export interface ScheduleModuleOptions {
   timeouts?: boolean;
 }
 
-/**
- * @publicApi
- */
 export interface ScheduleModuleOptionsFactory {
   createScheduleOptions(): Promise<ScheduleModuleOptions> | ScheduleModuleOptions;
 }
 
-/**
- * @publicApi
- */
 export interface ScheduleModuleAsyncOptions extends Pick<ModuleMetadata, 'imports'> {
   useExisting?: Type<ScheduleModuleOptionsFactory>;
   useClass?: Type<ScheduleModuleOptionsFactory>;

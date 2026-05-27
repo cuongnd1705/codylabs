@@ -4,7 +4,6 @@
  * @param connectionName - Optional connection name
  * @returns Injection token for the Redis client
  * @throws Error if connectionName is an empty string
- * @publicApi
  */
 export function RedisToken(connectionName?: string): string {
   if (connectionName === '') {

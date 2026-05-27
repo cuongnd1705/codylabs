@@ -1,18 +1,10 @@
 import { DynamicModule, Module, Provider, Type } from '@nestjs/common';
 import { DiscoveryModule, Reflector } from '@nestjs/core';
 
-import {
-  ScheduleModuleAsyncOptions,
-  ScheduleModuleOptions,
-  ScheduleModuleOptionsFactory,
-} from './interfaces/schedule-module-options.interface';
-import { RedisJobStore } from './redis/redis-job-store.service';
-import { RedisPollLoop } from './redis/redis-poll-loop.service';
-import { SchedulerMetadataAccessor } from './schedule-metadata.accessor';
-import { SCHEDULE_MODULE_OPTIONS } from './schedule.constants';
-import { ScheduleExplorer } from './schedule.explorer';
-import { SchedulerOrchestrator } from './scheduler.orchestrator';
-import { SchedulerRegistry } from './scheduler.registry';
+import { SCHEDULE_MODULE_OPTIONS } from './constants';
+import { ScheduleExplorer, SchedulerMetadataAccessor, SchedulerOrchestrator, SchedulerRegistry } from './core';
+import { ScheduleModuleAsyncOptions, ScheduleModuleOptions, ScheduleModuleOptionsFactory } from './interfaces';
+import { RedisJobStore, RedisPollLoop } from './redis';
 
 const CORE_PROVIDERS: Type[] = [
   SchedulerMetadataAccessor,
@@ -23,9 +15,6 @@ const CORE_PROVIDERS: Type[] = [
   ScheduleExplorer,
 ];
 
-/**
- * @publicApi
- */
 @Module({})
 export class ScheduleModule {
   static forRoot(options: ScheduleModuleOptions): DynamicModule {

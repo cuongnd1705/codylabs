@@ -4,9 +4,8 @@ import { Type } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
 import { createClient } from 'redis';
 
-import { ScheduleModule } from './schedule.module.js';
-import { DisabledCronService } from './test-utils/disabled-cron.service.js';
-import { TestService } from './test-utils/test.service.js';
+import { ScheduleModule } from '../schedule.module';
+import { DisabledCronService, TestService } from '../test-utils';
 
 describe('SchedulerOrchestrator - disabled cron jobs', () => {
   let client: RedisClientType;

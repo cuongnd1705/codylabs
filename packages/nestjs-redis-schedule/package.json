@@ -20,10 +20,11 @@
     "test:watch": "jest --watch"
   },
   "dependencies": {
-    "cron-parser": "^5.0.0"
+    "croner": "^10.0.1"
   },
   "devDependencies": {
-    "@codylabs/typescript-configs": "workspace:*"
+    "@codylabs/typescript-configs": "workspace:*",
+    "@nestjs/testing": "^11.1.24"
   },
   "peerDependencies": {
     "@nestjs/common": "^10.0.0 || ^11.0.0",

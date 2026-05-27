@@ -4,11 +4,10 @@ import { Injectable, Type } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
 import { createClient } from 'redis';
 
-import { Cron } from './decorators/cron.decorator.js';
-import { CronExpression } from './enums/cron-expression.enum.js';
-import { ScheduleModule } from './schedule.module.js';
-import { MultiCronService } from './test-utils/multi-cron.service.js';
-import { TestService } from './test-utils/test.service.js';
+import { Cron } from '../decorators';
+import { CronExpression } from '../enums';
+import { ScheduleModule } from '../schedule.module';
+import { MultiCronService, TestService } from '../test-utils';
 
 @Injectable()
 class IanaTzService {

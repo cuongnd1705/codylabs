@@ -1,9 +1,7 @@
 import { Injectable } from '@nestjs/common';
 
-import { SchedulerType } from './enums/scheduler-type.enum';
-import { RedisJobStore } from './redis/redis-job-store.service';
-import { RedisPollLoop } from './redis/redis-poll-loop.service';
-import { DUPLICATE_SCHEDULER, NO_SCHEDULER_FOUND } from './schedule.messages';
+import { DUPLICATE_SCHEDULER, NO_SCHEDULER_FOUND } from '../constants';
+import { SchedulerType } from '../enums';
 
 export interface CronJobHandle {
   start(): Promise<void>;
@@ -16,15 +14,8 @@ export interface CronJobHandle {
 @Injectable()
 export class SchedulerRegistry {
   private readonly cronJobs = new Map<string, CronJobHandle>();
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private readonly intervals = new Map<string, any>();
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private readonly timeouts = new Map<string, any>();
-
-  constructor(
-    private readonly store: RedisJobStore,
-    private readonly pollLoop: RedisPollLoop,
-  ) {}
 
   doesExist(type: 'cron' | 'timeout' | 'interval', name: string): boolean {
     switch (type) {
@@ -39,9 +30,11 @@ export class SchedulerRegistry {
 
   getCronJob(name: string): CronJobHandle {
     const ref = this.cronJobs.get(name);
+
     if (!ref) {
       throw new Error(NO_SCHEDULER_FOUND(SchedulerType.CRON, name));
     }
+
     return ref;
   }
 
@@ -53,22 +46,27 @@ export class SchedulerRegistry {
     if (this.cronJobs.has(name)) {
       throw new Error(DUPLICATE_SCHEDULER(SchedulerType.CRON, name));
     }
+
     this.cronJobs.set(name, job);
   }
 
+  /**
+   * Stops the job (removes from Redis + poll loop) and removes it from the registry.
+   * To restart later, call `addCronJob` then `start()` on the new handle.
+   */
   async deleteCronJob(name: string): Promise<void> {
     const job = this.getCronJob(name);
     await job.stop();
     this.cronJobs.delete(name);
-    this.pollLoop.unregisterJob(name);
-    await this.store.removeJob(name);
   }
 
   getInterval<T = NodeJS.Timeout>(name: string): T {
     const ref = this.intervals.get(name) as T | undefined;
+
     if (ref === undefined) {
       throw new Error(NO_SCHEDULER_FOUND(SchedulerType.INTERVAL, name));
     }
+
     return ref;
   }
 
@@ -80,6 +78,7 @@ export class SchedulerRegistry {
     if (this.intervals.has(name)) {
       throw new Error(DUPLICATE_SCHEDULER(SchedulerType.INTERVAL, name));
     }
+
     this.intervals.set(name, intervalId);
   }
 
@@ -91,6 +90,7 @@ export class SchedulerRegistry {
 
   getTimeout<T = NodeJS.Timeout>(name: string): T {
     const ref = this.timeouts.get(name) as T | undefined;
+
     if (ref === undefined) {
       throw new Error(NO_SCHEDULER_FOUND(SchedulerType.TIMEOUT, name));
     }

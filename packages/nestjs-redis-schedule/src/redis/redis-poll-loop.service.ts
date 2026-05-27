@@ -1,19 +1,9 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { CronExpressionParser } from 'cron-parser';
+import { Cron as CronScheduler } from 'croner';
 
 import { RedisJobStore } from './redis-job-store.service';
 
 const DEFAULT_EMPTY_SLEEP_MS = 1000;
-
-function resolveTimezone(timeZone?: string, utcOffset?: number): string | undefined {
-  if (timeZone) return timeZone;
-  if (utcOffset === undefined) return undefined;
-  const sign = utcOffset >= 0 ? '+' : '-';
-  const abs = Math.abs(utcOffset);
-  const hours = Math.floor(abs / 60);
-  const mins = abs % 60;
-  return mins === 0 ? `UTC${sign}${hours}` : `UTC${sign}${hours}:${String(mins).padStart(2, '0')}`;
-}
 const MAX_POLL_INTERVAL_MS = 60_000;
 
 export interface CronJobEntry {
@@ -69,6 +59,7 @@ export class RedisPollLoop {
 
         if (!next) {
           await this.interruptibleSleep(DEFAULT_EMPTY_SLEEP_MS, signal);
+
           continue;
         }
 
@@ -78,24 +69,23 @@ export class RedisPollLoop {
         }
 
         const claimedAt = await this.store.getTime();
-        const jobName = await this.store.claimDueJob(claimedAt);
+        const claimed = await this.store.claimDueJob(claimedAt);
 
-        if (!jobName) {
-          // Another instance claimed it; loop immediately
+        if (!claimed) {
           continue;
         }
 
-        const entry = this.jobs.get(jobName);
+        const entry = this.jobs.get(claimed.name);
         if (!entry) {
-          this.logger.warn(`Claimed unknown job: ${jobName}`);
+          this.logger.warn(`Claimed unknown job: ${claimed.name}`);
           continue;
         }
         const nextTs = this.computeNextOccurrence(entry);
-        await this.store.enqueueJob(jobName, nextTs);
+        await this.store.enqueueJob(claimed.name, nextTs);
 
-        if (claimedAt - next.score > entry.threshold) {
+        if (claimedAt - claimed.score > entry.threshold) {
           this.logger.warn(
-            `Skipping late job "${jobName}" (${claimedAt - next.score}ms overdue, threshold ${entry.threshold}ms)`,
+            `Skipping late job "${claimed.name}" (${claimedAt - claimed.score}ms overdue, threshold ${entry.threshold}ms)`,
           );
           continue;
         }
@@ -124,9 +114,19 @@ export class RedisPollLoop {
   }
 
   private computeNextOccurrence(entry: CronJobEntry): number {
-    const tz = resolveTimezone(entry.timeZone, entry.utcOffset);
-    const interval = CronExpressionParser.parse(entry.expression, tz ? { tz } : undefined);
-    return interval.next().toDate().getTime();
+    const next = new CronScheduler(entry.expression, {
+      paused: true,
+      ...(entry.timeZone
+        ? { timezone: entry.timeZone }
+        : entry.utcOffset !== undefined
+          ? { utcOffset: entry.utcOffset }
+          : {}),
+    }).nextRun();
+    if (!next) {
+      this.logger.error(`Cron expression "${entry.expression}" has no upcoming runs for job "${entry.name}".`);
+      return Date.now() + 86_400_000;
+    }
+    return next.getTime();
   }
 
   private interruptibleSleep(ms: number, signal: AbortSignal): Promise<void> {

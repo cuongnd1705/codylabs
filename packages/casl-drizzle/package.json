@@ -34,15 +34,15 @@
   },
   "dependencies": {
     "@ucast/core": "^2.0.0",
-    "@ucast/js": "^4.0.0"
+    "@ucast/js": "^4.0.1"
   },
   "devDependencies": {
     "@casl/ability": "^7.0.0",
     "@codylabs/typescript-configs": "workspace:*",
-    "drizzle-orm": "^1.0.0-rc.4",
+    "drizzle-orm": "1.0.0-rc.4-5d5b77c",
     "tsdown": "^0.22.0",
     "typescript": "^6.0.3",
-    "vitest": "^3.2.1"
+    "vitest": "^4.1.7"
   },
   "peerDependencies": {
     "@casl/ability": "^7.0.0",

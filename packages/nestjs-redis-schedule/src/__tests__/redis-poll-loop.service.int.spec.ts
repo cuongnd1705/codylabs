@@ -3,9 +3,8 @@ import type { RedisClientType } from 'redis';
 import { Test } from '@nestjs/testing';
 import { createClient } from 'redis';
 
-import { SCHEDULE_MODULE_OPTIONS } from '../schedule.constants.js';
-import { RedisJobStore } from './redis-job-store.service.js';
-import { RedisPollLoop } from './redis-poll-loop.service.js';
+import { SCHEDULE_MODULE_OPTIONS } from '../constants';
+import { RedisJobStore, RedisPollLoop } from '../redis';
 
 const makeStore = async (client: RedisClientType, keyPrefix = 'test') => {
   const module = await Test.createTestingModule({

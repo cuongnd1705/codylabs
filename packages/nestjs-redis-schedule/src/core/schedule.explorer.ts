@@ -2,13 +2,13 @@ import { Inject, Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { DiscoveryService, MetadataScanner } from '@nestjs/core';
 import { InstanceWrapper } from '@nestjs/core/injector/instance-wrapper';
 
-import type { CronOptions } from './decorators/cron.decorator.js';
-import type { ScheduleModuleOptions } from './interfaces/schedule-module-options.interface.js';
+import type { CronOptions } from '../decorators';
+import type { ScheduleModuleOptions } from '../interfaces';
 
-import { SchedulerType } from './enums/scheduler-type.enum.js';
-import { SchedulerMetadataAccessor } from './schedule-metadata.accessor.js';
-import { SCHEDULE_MODULE_OPTIONS } from './schedule.constants.js';
-import { SchedulerOrchestrator } from './scheduler.orchestrator.js';
+import { SCHEDULE_MODULE_OPTIONS } from '../constants';
+import { SchedulerType } from '../enums';
+import { SchedulerMetadataAccessor } from './schedule-metadata.accessor';
+import { SchedulerOrchestrator } from './scheduler.orchestrator';
 
 @Injectable()
 export class ScheduleExplorer implements OnModuleInit {
@@ -17,6 +17,7 @@ export class ScheduleExplorer implements OnModuleInit {
   constructor(
     @Inject(SCHEDULE_MODULE_OPTIONS)
     private readonly moduleOptions: ScheduleModuleOptions,
+
     private readonly schedulerOrchestrator: SchedulerOrchestrator,
     private readonly discoveryService: DiscoveryService,
     private readonly metadataAccessor: SchedulerMetadataAccessor,
@@ -44,13 +45,6 @@ export class ScheduleExplorer implements OnModuleInit {
           ? this.lookupSchedulers(instance, name)
           : this.warnForNonStaticProviders(wrapper, instance, name);
 
-      // TODO(v4): remove this after dropping support for nestjs v9.3.2
-      if (!Reflect.has(this.metadataScanner, 'getAllMethodNames')) {
-        this.metadataScanner.scanFromPrototype(instance, Object.getPrototypeOf(instance), processMethod);
-
-        return;
-      }
-
       this.metadataScanner.getAllMethodNames(Object.getPrototypeOf(instance)).forEach(processMethod);
     });
   }
@@ -64,12 +58,18 @@ export class ScheduleExplorer implements OnModuleInit {
         if (!this.moduleOptions.cronJobs) {
           return;
         }
+
         const cronMetadata = this.metadataAccessor.getCronMetadata(methodRef);
-        if (!cronMetadata) return;
+
+        if (!cronMetadata) {
+          return;
+        }
+
         const cronFn = this.wrapFunctionInTryCatchBlocks(methodRef, instance);
         const resolvedName =
           cronMetadata.name ??
           `${(instance as { constructor?: { name?: string } }).constructor?.name ?? 'Unknown'}.${key}`;
+
         return this.schedulerOrchestrator.addCron(cronFn, {
           ...cronMetadata,
           name: resolvedName,
@@ -79,12 +79,19 @@ export class ScheduleExplorer implements OnModuleInit {
         if (!this.moduleOptions.timeouts) {
           return;
         }
+
         const timeoutMetadata = this.metadataAccessor.getTimeoutMetadata(methodRef);
-        if (!timeoutMetadata) return;
+
+        if (!timeoutMetadata) {
+          return;
+        }
+
         const name =
           this.metadataAccessor.getSchedulerName(methodRef) ??
           `${(instance as { constructor?: { name?: string } }).constructor?.name ?? 'Unknown'}.${key}`;
         const timeoutFn = this.wrapFunctionInTryCatchBlocks(methodRef, instance);
+
+        this.logger.warn(`@Timeout("${name}") runs on EVERY instance — only @Cron is distributed via Redis.`);
 
         return this.schedulerOrchestrator.addTimeout(timeoutFn, timeoutMetadata.timeout, name);
       }
@@ -92,12 +99,19 @@ export class ScheduleExplorer implements OnModuleInit {
         if (!this.moduleOptions.intervals) {
           return;
         }
+
         const intervalMetadata = this.metadataAccessor.getIntervalMetadata(methodRef);
-        if (!intervalMetadata) return;
+
+        if (!intervalMetadata) {
+          return;
+        }
+
         const name =
           this.metadataAccessor.getSchedulerName(methodRef) ??
           `${(instance as { constructor?: { name?: string } }).constructor?.name ?? 'Unknown'}.${key}`;
         const intervalFn = this.wrapFunctionInTryCatchBlocks(methodRef, instance);
+
+        this.logger.warn(`@Interval("${name}") runs on EVERY instance — only @Cron is distributed via Redis.`);
 
         return this.schedulerOrchestrator.addInterval(intervalFn, intervalMetadata.timeout, name);
       }
@@ -113,27 +127,33 @@ export class ScheduleExplorer implements OnModuleInit {
         if (!this.moduleOptions.cronJobs) {
           return;
         }
+
         this.logger.warn(
           `Cannot register cron job "${wrapper.name}@${key}" because it is defined in a non static provider.`,
         );
+
         break;
       }
       case SchedulerType.TIMEOUT: {
         if (!this.moduleOptions.timeouts) {
           return;
         }
+
         this.logger.warn(
           `Cannot register timeout "${wrapper.name}@${key}" because it is defined in a non static provider.`,
         );
+
         break;
       }
       case SchedulerType.INTERVAL: {
         if (!this.moduleOptions.intervals) {
           return;
         }
+
         this.logger.warn(
           `Cannot register interval "${wrapper.name}@${key}" because it is defined in a non static provider.`,
         );
+
         break;
       }
     }

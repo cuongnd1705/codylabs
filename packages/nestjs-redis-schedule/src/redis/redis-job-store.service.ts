@@ -2,17 +2,17 @@ import type { RedisClientType, RedisClusterType, RedisSentinelType } from 'redis
 
 import { Inject, Injectable } from '@nestjs/common';
 
-import type { ScheduleModuleOptions } from '../interfaces/schedule-module-options.interface';
+import type { ScheduleModuleOptions } from '../interfaces';
 
-import { SCHEDULE_MODULE_OPTIONS } from '../schedule.constants';
+import { SCHEDULE_MODULE_OPTIONS } from '../constants';
 
 type RedisClientLike = RedisClientType | RedisClusterType | RedisSentinelType;
 
 const CLAIM_SCRIPT = `
-local jobs = redis.call('ZRANGEBYSCORE', KEYS[1], '-inf', ARGV[1], 'LIMIT', 0, 1)
-if #jobs == 0 then return nil end
+local jobs = redis.call('ZRANGEBYSCORE', KEYS[1], '-inf', ARGV[1], 'WITHSCORES', 'LIMIT', 0, 1)
+if #jobs == 0 then return false end
 redis.call('ZREM', KEYS[1], jobs[1])
-return jobs[1]
+return {jobs[1], jobs[2]}
 `;
 
 // KEYS[1] = metaKey, KEYS[2] = jobsKey
@@ -55,14 +55,24 @@ export class RedisJobStore {
 
   /**
    * Atomically claims the next due job (score ≤ nowMs).
-   * Returns the job name if claimed, null otherwise.
+   * Returns the job name and its scheduled score if claimed, null otherwise.
    */
-  async claimDueJob(nowMs: number): Promise<string | null> {
+  async claimDueJob(nowMs: number): Promise<{ name: string; score: number } | null> {
     const result = await this.execScript(CLAIM_SCRIPT, {
       keys: [this.jobsKey],
       arguments: [nowMs.toString()],
     });
-    return (result as string | null) ?? null;
+
+    if (!result) {
+      return null;
+    }
+
+    const [name, scoreStr] = result as [string, string];
+
+    return {
+      name,
+      score: parseFloat(scoreStr),
+    };
   }
 
   /**
@@ -70,9 +80,16 @@ export class RedisJobStore {
    */
   async peekNextJob(): Promise<{ name: string; score: number } | null> {
     const results = await this.client.zRangeWithScores(this.jobsKey, 0, 0);
-    if (results.length === 0) return null;
+
+    if (results.length === 0) {
+      return null;
+    }
     const { value, score } = results[0];
-    return { name: value, score };
+
+    return {
+      name: value,
+      score,
+    };
   }
 
   /**
