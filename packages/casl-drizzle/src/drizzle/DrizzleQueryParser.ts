@@ -10,13 +10,11 @@ import {
   ObjectQueryParser,
 } from '@ucast/core';
 
-import { ParsingQueryError } from '../errors/ParsingQueryError';
+import { ParsingQueryError } from '../errors';
 
 const isPlainObject = (value: any): value is Record<string, unknown> => {
   return value && (value.constructor === Object || !value.constructor);
 };
-
-// ─── Field Instructions ──────────────────────────────────────────────────────
 
 /** Default operator: direct value comparison (`{ id: 1 }` → equals) */
 const equals: FieldInstruction = {
@@ -67,8 +65,6 @@ const comparable: FieldInstruction<Comparable> = {
   },
 };
 
-// ─── String Instructions ─────────────────────────────────────────────────────
-
 const stringField: FieldInstruction<string> = {
   type: 'field',
   validate(instruction, value) {
@@ -77,8 +73,6 @@ const stringField: FieldInstruction<string> = {
     }
   },
 };
-
-// ─── Boolean Field Instructions ──────────────────────────────────────────────
 
 const booleanField: FieldInstruction<boolean> = {
   type: 'field',
@@ -89,8 +83,6 @@ const booleanField: FieldInstruction<boolean> = {
   },
 };
 
-// ─── Array Instructions ──────────────────────────────────────────────────────
-
 const arrayField: FieldInstruction<unknown[]> = {
   type: 'field',
   validate(instruction, value) {
@@ -99,8 +91,6 @@ const arrayField: FieldInstruction<unknown[]> = {
     }
   },
 };
-
-// ─── Compound Instructions ───────────────────────────────────────────────────
 
 const compound: CompoundInstruction = {
   type: 'compound',
@@ -115,8 +105,6 @@ const compound: CompoundInstruction = {
     return new CompoundCondition(instruction.name, conditions);
   },
 };
-
-// ─── Inverted Operator Helper ────────────────────────────────────────────────
 
 const inverted = (name: string, baseInstruction: FieldInstruction): FieldInstruction => {
   const baseParse = baseInstruction.parse;
@@ -143,8 +131,6 @@ const inverted = (name: string, baseInstruction: FieldInstruction): FieldInstruc
   };
 };
 
-// ─── Instructions Map ────────────────────────────────────────────────────────
-
 const instructions = {
   equals,
   eq: equals,
@@ -168,8 +154,6 @@ const instructions = {
   AND: compound,
   OR: compound,
 };
-
-// ─── Parser ──────────────────────────────────────────────────────────────────
 
 export interface ParseOptions {
   field: string;

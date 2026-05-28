@@ -1,8 +1,6 @@
 import type { hkt } from '@casl/ability';
 
-import type { Model } from './drizzle/drizzleQuery';
-
-// ─── Where Input Types ──────────────────────────────────────────────────────
+import type { Model } from './drizzle';
 
 /** Operators available on each column in a Drizzle RQB v2 where clause */
 export interface DrizzleFieldFilter<T = unknown> {
@@ -40,8 +38,6 @@ export type DrizzleWhereInput<TRecord extends object = Record<string, unknown>> 
   NOT?: DrizzleWhereInput<TRecord> | undefined;
 };
 
-// ─── Subject / Model Name inference ─────────────────────────────────────────
-
 type ExtractModelName<TObject, TModelName extends PropertyKey> = TObject extends { kind: TModelName }
   ? TObject['kind']
   : TObject extends { readonly __caslSubjectType__: TModelName }
@@ -49,8 +45,6 @@ type ExtractModelName<TObject, TModelName extends PropertyKey> = TObject extends
     : TObject extends { __typename: TModelName }
       ? TObject['__typename']
       : TModelName;
-
-// ─── DrizzleTypes map ────────────────────────────────────────────────────────
 
 /**
  * Maps subject names to their where input shapes.
@@ -62,8 +56,6 @@ export interface DrizzleTypesMap<TSubjects extends Record<string, object>> {
     [K in keyof TSubjects]: DrizzleWhereInput<TSubjects[K]>;
   };
 }
-
-// ─── HKT Container ──────────────────────────────────────────────────────────
 
 interface DrizzleQueryTypeFactory<TSubjects extends Record<string, object>> extends hkt.GenericFactory {
   produce: DrizzleTypesMap<TSubjects>['WhereInput'][ExtractModelName<this[0], DrizzleTypesMap<TSubjects>['ModelName']>];

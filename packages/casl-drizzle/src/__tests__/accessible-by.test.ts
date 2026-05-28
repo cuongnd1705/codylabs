@@ -1,9 +1,10 @@
 import { type Ability, subject } from '@casl/ability';
 import { describe, it, expect } from 'vitest';
 
-import type { DrizzleQuery, Subjects } from '../index';
-
-import { accessibleBy, createDrizzleAbility } from '../index';
+import { accessibleBy } from '../accessibleBy';
+import { createDrizzleAbility } from '../createDrizzleAbility';
+import { Subjects } from '../drizzle';
+import { DrizzleQuery } from '../types';
 
 interface Post {
   id: number;

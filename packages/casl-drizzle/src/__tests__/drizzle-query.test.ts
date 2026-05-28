@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 
-import { drizzleQuery } from '../drizzle/drizzleQuery';
+import { drizzleQuery } from '../drizzle';
 
 describe('drizzleQuery evaluation', () => {
   // ─── equals (default operator) ───────────────────────────────────────────

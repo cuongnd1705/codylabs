@@ -10,7 +10,7 @@ import {
 
 import type { BaseDrizzleQuery } from './types';
 
-import { drizzleQuery } from './drizzle/drizzleQuery';
+import { drizzleQuery } from './drizzle';
 
 export function createDrizzleAbility<T extends Ability<any, BaseDrizzleQuery>>(
   rules?: RawRuleOf<T>[],
