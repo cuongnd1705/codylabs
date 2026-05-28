@@ -1,6 +1,6 @@
 {
   "name": "@codylabs/nestjs-pg-drizzle",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "description": "PostgreSQL (using Drizzle ORM) module for NestJS",
   "license": "MIT",
   "author": "Cody Nguyen",

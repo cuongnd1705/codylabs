@@ -47,23 +47,26 @@ export abstract class BaseRepository<
 > {
   protected readonly db: Database<TRel>;
   protected readonly table: U;
-  protected alias: string;
   private tableName!: keyof TRel;
 
   constructor(db: Database<TRel>, table: U, tableName: V) {
     this.db = db;
     this.table = table;
     this.tableName = tableName;
-
-    Object.getOwnPropertySymbols(table).map((k) => {
-      if (k.toString() === 'Symbol(drizzle:Name)') {
-        this.alias = camel((table as any)[k].replace('_private_', ''));
-      }
-    });
   }
 
   get columns(): (keyof U['_']['columns'])[] {
     return objectKeys(getColumns(this.table));
+  }
+
+  get alias(): string {
+    const aliasSymbol = Object.getOwnPropertySymbols(this.table).find((k) => k.toString() === 'Symbol(drizzle:Name)');
+
+    if (aliasSymbol) {
+      return camel((this.table as any)[aliasSymbol].replace('_private_', ''));
+    }
+
+    return undefined;
   }
 
   async withTransaction<T>(fn: (tx: Transaction<TRel>) => Promise<T>): Promise<T> {
