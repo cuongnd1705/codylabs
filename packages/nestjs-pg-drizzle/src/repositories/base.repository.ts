@@ -35,6 +35,7 @@ import {
   SelectResultFields,
   Transaction,
 } from '../interfaces';
+import { camel } from '../utils';
 
 const objectKeys = <O extends object>(obj: O): (keyof O)[] => Object.keys(obj) as (keyof O)[];
 
@@ -46,20 +47,23 @@ export abstract class BaseRepository<
 > {
   protected readonly db: Database<TRel>;
   protected readonly table: U;
+  protected alias: string;
   private tableName!: keyof TRel;
 
   constructor(db: Database<TRel>, table: U, tableName: V) {
     this.db = db;
     this.table = table;
     this.tableName = tableName;
+
+    Object.getOwnPropertySymbols(table).map((k) => {
+      if (k.toString() === 'Symbol(drizzle:Name)') {
+        this.alias = camel((table as any)[k].replace('_private_', ''));
+      }
+    });
   }
 
   get columns(): (keyof U['_']['columns'])[] {
     return objectKeys(getColumns(this.table));
-  }
-
-  get alias() {
-    return this.tableName;
   }
 
   async withTransaction<T>(fn: (tx: Transaction<TRel>) => Promise<T>): Promise<T> {
