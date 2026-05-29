@@ -12,6 +12,7 @@ import type {
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import {
   type BuildQueryResult,
+  DBQueryConfig,
   type InferSelectModel,
   type TablesRelationalConfig,
   getColumns,
@@ -79,6 +80,19 @@ export abstract class BaseRepository<
 
   private hasUpdateTime() {
     return this.columns.includes('updateTime');
+  }
+
+  /**
+   * Converts a relational filter object to a SQL condition, supporting cross-table
+   * relation filters by passing the full relational config from the db instance.
+   */
+  private filterToSQL(
+    filter: DBQueryConfig<'one' | 'many', TRel, TRel[V]>['where'],
+  ): ReturnType<typeof relationsFilterToSQL> {
+    const allRelations = this.db._.relations;
+    const tableRelations = allRelations[this.tableName].relations ?? {};
+
+    return relationsFilterToSQL(this.table, filter, tableRelations, allRelations);
   }
 
   /**
@@ -428,7 +442,7 @@ export abstract class BaseRepository<
       } else if (typeof opts.where === 'function') {
         where = (opts.where as any)(getColumns(this.table), operators);
       } else if (typeof opts.where === 'object') {
-        where = relationsFilterToSQL(this.table, opts.where);
+        where = this.filterToSQL(opts.where);
       }
     }
 
@@ -480,7 +494,7 @@ export abstract class BaseRepository<
       } else if (typeof opts.where === 'function') {
         where = (opts.where as any)(getColumns(this.table), operators);
       } else if (typeof opts.where === 'object') {
-        where = relationsFilterToSQL(this.table, opts.where);
+        where = this.filterToSQL(opts.where);
       }
     }
 
@@ -630,7 +644,7 @@ export abstract class BaseRepository<
       } else if (typeof opts.where === 'function') {
         where = (opts.where as any)(getColumns(this.table), operators);
       } else if (typeof opts.where === 'object') {
-        where = relationsFilterToSQL(this.table, opts.where);
+        where = this.filterToSQL(opts.where);
       }
     }
 
@@ -684,7 +698,7 @@ export abstract class BaseRepository<
     let where;
 
     if (opts?.where) {
-      where = relationsFilterToSQL(this.table, opts.where);
+      where = this.filterToSQL(opts.where);
     }
 
     const qb: any = (opts?.tx || this.db)
@@ -725,7 +739,7 @@ export abstract class BaseRepository<
     let where;
 
     if (opts?.where) {
-      where = relationsFilterToSQL(this.table, opts.where);
+      where = this.filterToSQL(opts.where);
     }
 
     const col = (this.table as any)[column];
@@ -763,7 +777,7 @@ export abstract class BaseRepository<
     let where;
 
     if (opts?.where) {
-      where = relationsFilterToSQL(this.table, opts.where);
+      where = this.filterToSQL(opts.where);
     }
 
     const col = (this.table as any)[column];
@@ -800,7 +814,7 @@ export abstract class BaseRepository<
     let where;
 
     if (finalConfig.where) {
-      where = relationsFilterToSQL(this.table, finalConfig.where);
+      where = this.filterToSQL(finalConfig.where);
     }
 
     const result = await (tx || this.db).execute(
@@ -830,7 +844,7 @@ export abstract class BaseRepository<
     let where;
 
     if (finalConfig.where) {
-      where = relationsFilterToSQL(this.table, finalConfig.where);
+      where = this.filterToSQL(finalConfig.where);
     }
 
     const rows = await (opts?.tx || (this.db as any))
@@ -860,7 +874,7 @@ export abstract class BaseRepository<
     let where;
 
     if (opts?.where) {
-      where = relationsFilterToSQL(this.table, opts.where);
+      where = this.filterToSQL(opts.where);
     }
 
     const col = (this.table as any)[column];
@@ -892,7 +906,7 @@ export abstract class BaseRepository<
     let where;
 
     if (opts?.where) {
-      where = relationsFilterToSQL(this.table, opts.where);
+      where = this.filterToSQL(opts.where);
     }
 
     const col = (this.table as any)[column];
@@ -924,7 +938,7 @@ export abstract class BaseRepository<
     let where;
 
     if (opts?.where) {
-      where = relationsFilterToSQL(this.table, opts.where);
+      where = this.filterToSQL(opts.where);
     }
 
     const col = (this.table as any)[column];
@@ -956,7 +970,7 @@ export abstract class BaseRepository<
     let where;
 
     if (opts?.where) {
-      where = relationsFilterToSQL(this.table, opts.where);
+      where = this.filterToSQL(opts.where);
     }
 
     const col = (this.table as any)[column];
@@ -1007,7 +1021,7 @@ export abstract class BaseRepository<
     let countWhere;
 
     if (countConfig.where) {
-      countWhere = relationsFilterToSQL(this.table, countConfig.where);
+      countWhere = this.filterToSQL(countConfig.where);
     }
 
     const parsed = this.parseOrderByString(orderBy ?? 'id');
