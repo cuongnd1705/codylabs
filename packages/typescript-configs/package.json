@@ -6,5 +6,16 @@
   "author": "Cody Nguyen",
   "publishConfig": {
     "access": "public"
-  }
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/cuongnd1705/codylabs.git"
+  },
+  "homepage": "https://github.com/cuongnd1705/codylabs#readme",
+  "bugs": {
+    "url": "https://github.com/cuongnd1705/codylabs/issues"
+  },
+  "files": [
+    "*.json"
+  ]
 }

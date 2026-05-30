@@ -35,5 +35,13 @@
     "@types/pg": "^8.0.0",
     "drizzle-orm": ">=1.0.0-rc.1",
     "pg": "^8.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/cuongnd1705/codylabs.git"
+  },
+  "homepage": "https://github.com/cuongnd1705/codylabs#readme",
+  "bugs": {
+    "url": "https://github.com/cuongnd1705/codylabs/issues"
   }
 }

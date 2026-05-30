@@ -34,8 +34,16 @@
   },
   "devDependencies": {
     "@codylabs/typescript-configs": "workspace:*",
-    "tsdown": "^0.22.0",
+    "tsdown": "^0.22.1",
     "typescript": "^6.0.3",
     "vitest": "^4.1.7"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/cuongnd1705/codylabs.git"
+  },
+  "homepage": "https://github.com/cuongnd1705/codylabs#readme",
+  "bugs": {
+    "url": "https://github.com/cuongnd1705/codylabs/issues"
   }
 }

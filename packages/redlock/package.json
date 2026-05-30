@@ -1,7 +1,7 @@
 {
   "name": "@codylabs/redlock",
   "version": "0.0.1",
-  "description": "",
+  "description": "Package @codylabs/redlock from Codylabs monorepo",
   "license": "MIT",
   "author": "Cody Nguyen",
   "files": [
@@ -34,11 +34,19 @@
   },
   "devDependencies": {
     "@codylabs/typescript-configs": "workspace:*",
-    "tsdown": "^0.22.0",
+    "tsdown": "^0.22.1",
     "typescript": "^6.0.3",
     "vitest": "^4.1.7"
   },
   "peerDependencies": {
-    "redis": "^5.0.0"
+    "redis": "^6.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/cuongnd1705/codylabs.git"
+  },
+  "homepage": "https://github.com/cuongnd1705/codylabs#readme",
+  "bugs": {
+    "url": "https://github.com/cuongnd1705/codylabs/issues"
   }
 }

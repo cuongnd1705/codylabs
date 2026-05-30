@@ -45,5 +45,13 @@
   "peerDependencies": {
     "@nestjs/common": "^10.0.0 || ^11.0.0",
     "@nestjs/core": "^10.0.0 || ^11.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/cuongnd1705/codylabs.git"
+  },
+  "homepage": "https://github.com/cuongnd1705/codylabs#readme",
+  "bugs": {
+    "url": "https://github.com/cuongnd1705/codylabs/issues"
   }
 }
