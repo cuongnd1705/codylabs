@@ -1,6 +1,6 @@
 {
   "name": "@codylabs/redlock",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "Package @codylabs/redlock from Codylabs monorepo",
   "license": "MIT",
   "author": "Cody Nguyen",

@@ -1,6 +1,6 @@
 {
   "name": "@codylabs/casl-drizzle",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "CASL integration for Drizzle ORM — define and enforce permissions using Drizzle RQB v2 where syntax.",
   "license": "MIT",
   "author": "Cody Nguyen",

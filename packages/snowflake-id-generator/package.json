@@ -1,6 +1,6 @@
 {
   "name": "@codylabs/snowflake-id-generator",
-  "version": "0.0.6",
+  "version": "0.0.7",
   "description": "A Snowflake ID generator for unique identifier creation.",
   "author": "Cody Nguyen",
   "files": [

@@ -1,6 +1,6 @@
 {
   "name": "@codylabs/nestjs-redis",
-  "version": "0.0.6",
+  "version": "0.0.7",
   "description": "Flexible, production-ready Redis client module for NestJS with multi-connection support, built on the modern node-redis client",
   "license": "MIT",
   "author": "Cody Nguyen",

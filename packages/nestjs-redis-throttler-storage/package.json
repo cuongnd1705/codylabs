@@ -1,6 +1,6 @@
 {
   "name": "@codylabs/nestjs-redis-throttler-storage",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "Redis storage for NestJS Throttler enabling distributed rate limiting across multiple application instances",
   "license": "MIT",
   "author": "Cody Nguyen",

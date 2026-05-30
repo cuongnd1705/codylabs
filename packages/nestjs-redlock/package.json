@@ -1,6 +1,6 @@
 {
   "name": "@codylabs/nestjs-redlock",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "Redis-based distributed lock module for NestJS, built on @codylabs/redlock",
   "license": "MIT",
   "author": "Cody Nguyen",
