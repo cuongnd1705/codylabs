@@ -106,7 +106,7 @@ export type PaginateByOffsetQueryConfig<TRel extends TablesRelationalConfig, V e
 /**
  * The paginate by cursor query builder config.
  *
- * `sortBy` accepts either:
+ * `orderBy` accepts either:
  *   - A `string` (single field, uses `sortDirection` for direction)
  *   - An `Array<CursorSortField>` (multiple fields, per-field direction; `sortDirection` is ignored)
  *
@@ -120,7 +120,7 @@ export type PaginateByCursorQueryConfig<TRel extends TablesRelationalConfig, V e
     showDeleted?: boolean;
     tx?: Transaction;
   },
-  'limit' | 'offset' | 'orderBy'
+  'limit' | 'offset'
 >;
 
 /**
