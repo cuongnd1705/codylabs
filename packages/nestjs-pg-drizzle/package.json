@@ -1,9 +1,17 @@
 {
   "name": "@codylabs/nestjs-pg-drizzle",
-  "version": "0.0.6",
+  "version": "0.0.7",
   "description": "PostgreSQL (using Drizzle ORM) module for NestJS",
+  "homepage": "https://github.com/cuongnd1705/codylabs#readme",
+  "bugs": {
+    "url": "https://github.com/cuongnd1705/codylabs/issues"
+  },
   "license": "MIT",
   "author": "Cody Nguyen",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/cuongnd1705/codylabs.git"
+  },
   "files": [
     "dist/**"
   ],
@@ -35,13 +43,5 @@
     "@types/pg": "^8.0.0",
     "drizzle-orm": ">=1.0.0-rc.1",
     "pg": "^8.0.0"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/cuongnd1705/codylabs.git"
-  },
-  "homepage": "https://github.com/cuongnd1705/codylabs#readme",
-  "bugs": {
-    "url": "https://github.com/cuongnd1705/codylabs/issues"
   }
 }
