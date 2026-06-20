@@ -85,6 +85,7 @@ export const IsStringField = (stringFieldOptions?: StringFieldOptions) => {
     decoratorsToApply.push(
       Matches(options.regex, {
         message: 'The value does not match the required pattern',
+        each: options.each,
       }),
     );
   }
