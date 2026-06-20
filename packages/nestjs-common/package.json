@@ -1,6 +1,6 @@
 {
   "name": "@codylabs/nestjs-common",
-  "version": "0.0.10",
+  "version": "0.1.0",
   "description": "Common utilities for NestJS applications",
   "license": "MIT",
   "author": "Cody Nguyen",
