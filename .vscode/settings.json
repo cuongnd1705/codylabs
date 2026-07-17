@@ -47,5 +47,6 @@
     "Dockerfile": "docker-compose.yml, docker-compose.*.yml, .dockerignore",
     "README.md": "CHANGELOG.md, CONTRIBUTING.md, LICENSE"
   },
-  "material-icon-theme.activeIconPack": "nest"
+  "material-icon-theme.activeIconPack": "nest",
+  "js/ts.experimental.useTsgo": false
 }

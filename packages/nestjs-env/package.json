@@ -2,8 +2,16 @@
   "name": "@codylabs/nestjs-env",
   "version": "0.0.5",
   "description": "Environment variable module for NestJS",
+  "homepage": "https://github.com/cuongnd1705/codylabs#readme",
+  "bugs": {
+    "url": "https://github.com/cuongnd1705/codylabs/issues"
+  },
   "license": "MIT",
   "author": "Cody Nguyen",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/cuongnd1705/codylabs.git"
+  },
   "files": [
     "dist/**"
   ],
@@ -35,9 +43,9 @@
   "devDependencies": {
     "@codylabs/helper-fns": "workspace:*",
     "@codylabs/typescript-configs": "workspace:*",
-    "@nestjs/platform-express": "^11.1.24",
+    "@nestjs/platform-express": "^11.1.28",
     "@types/express": "^5.0.6",
-    "@types/node": "^25.9.1",
+    "@types/node": "^26.1.1",
     "express": "^5.2.1",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.2"
@@ -45,13 +53,5 @@
   "peerDependencies": {
     "@nestjs/common": "^10.0.0 || ^11.0.0",
     "@nestjs/core": "^10.0.0 || ^11.0.0"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/cuongnd1705/codylabs.git"
-  },
-  "homepage": "https://github.com/cuongnd1705/codylabs#readme",
-  "bugs": {
-    "url": "https://github.com/cuongnd1705/codylabs/issues"
   }
 }

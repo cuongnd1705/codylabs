@@ -2,7 +2,16 @@
   "name": "@codylabs/snowflake-id-generator",
   "version": "0.0.7",
   "description": "A Snowflake ID generator for unique identifier creation.",
+  "homepage": "https://github.com/cuongnd1705/codylabs#readme",
+  "bugs": {
+    "url": "https://github.com/cuongnd1705/codylabs/issues"
+  },
+  "license": "MIT",
   "author": "Cody Nguyen",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/cuongnd1705/codylabs.git"
+  },
   "files": [
     "dist/**"
   ],
@@ -33,17 +42,8 @@
   },
   "devDependencies": {
     "@codylabs/typescript-configs": "workspace:*",
-    "tsdown": "^0.22.1",
+    "tsdown": "^0.22.9",
     "typescript": "^6.0.3",
-    "vitest": "^4.1.7"
-  },
-  "license": "MIT",
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/cuongnd1705/codylabs.git"
-  },
-  "homepage": "https://github.com/cuongnd1705/codylabs#readme",
-  "bugs": {
-    "url": "https://github.com/cuongnd1705/codylabs/issues"
+    "vitest": "^4.1.10"
   }
 }

@@ -2,8 +2,16 @@
   "name": "@codylabs/helper-fns",
   "version": "0.0.6",
   "description": "Functional TypeScript utility library - modern, simple, typed, powerful",
+  "homepage": "https://github.com/cuongnd1705/codylabs#readme",
+  "bugs": {
+    "url": "https://github.com/cuongnd1705/codylabs/issues"
+  },
   "license": "MIT",
   "author": "Cody Nguyen",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/cuongnd1705/codylabs.git"
+  },
   "files": [
     "dist/**"
   ],
@@ -34,16 +42,8 @@
   },
   "devDependencies": {
     "@codylabs/typescript-configs": "workspace:*",
-    "tsdown": "^0.22.1",
+    "tsdown": "^0.22.9",
     "typescript": "^6.0.3",
-    "vitest": "^4.1.7"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/cuongnd1705/codylabs.git"
-  },
-  "homepage": "https://github.com/cuongnd1705/codylabs#readme",
-  "bugs": {
-    "url": "https://github.com/cuongnd1705/codylabs/issues"
+    "vitest": "^4.1.10"
   }
 }

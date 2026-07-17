@@ -2,8 +2,16 @@
   "name": "@codylabs/nestjs-redlock",
   "version": "0.0.2",
   "description": "Redis-based distributed lock module for NestJS, built on @codylabs/redlock",
+  "homepage": "https://github.com/cuongnd1705/codylabs#readme",
+  "bugs": {
+    "url": "https://github.com/cuongnd1705/codylabs/issues"
+  },
   "license": "MIT",
   "author": "Cody Nguyen",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/cuongnd1705/codylabs.git"
+  },
   "files": [
     "dist/**"
   ],
@@ -28,19 +36,11 @@
   },
   "devDependencies": {
     "@codylabs/typescript-configs": "workspace:*",
-    "@nestjs/testing": "^11.1.24"
+    "@nestjs/testing": "^11.1.28"
   },
   "peerDependencies": {
     "@codylabs/redlock": "workspace:*",
     "@nestjs/common": "^11.0.0",
     "redis": "^6.0.0"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/cuongnd1705/codylabs.git"
-  },
-  "homepage": "https://github.com/cuongnd1705/codylabs#readme",
-  "bugs": {
-    "url": "https://github.com/cuongnd1705/codylabs/issues"
   }
 }

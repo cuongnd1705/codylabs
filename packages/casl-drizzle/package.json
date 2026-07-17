@@ -2,8 +2,16 @@
   "name": "@codylabs/casl-drizzle",
   "version": "0.0.2",
   "description": "CASL integration for Drizzle ORM — define and enforce permissions using Drizzle RQB v2 where syntax.",
+  "homepage": "https://github.com/cuongnd1705/codylabs#readme",
+  "bugs": {
+    "url": "https://github.com/cuongnd1705/codylabs/issues"
+  },
   "license": "MIT",
   "author": "Cody Nguyen",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/cuongnd1705/codylabs.git"
+  },
   "files": [
     "dist/**"
   ],
@@ -37,23 +45,15 @@
     "@ucast/js": "^4.0.1"
   },
   "devDependencies": {
-    "@casl/ability": "^7.0.0",
+    "@casl/ability": "^7.0.1",
     "@codylabs/typescript-configs": "workspace:*",
     "drizzle-orm": "1.0.0-rc.4-5d5b77c",
-    "tsdown": "^0.22.1",
+    "tsdown": "^0.22.9",
     "typescript": "^6.0.3",
-    "vitest": "^4.1.7"
+    "vitest": "^4.1.10"
   },
   "peerDependencies": {
     "@casl/ability": "^7.0.0",
     "drizzle-orm": ">=1.0.0-0"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/cuongnd1705/codylabs.git"
-  },
-  "homepage": "https://github.com/cuongnd1705/codylabs#readme",
-  "bugs": {
-    "url": "https://github.com/cuongnd1705/codylabs/issues"
   }
 }
