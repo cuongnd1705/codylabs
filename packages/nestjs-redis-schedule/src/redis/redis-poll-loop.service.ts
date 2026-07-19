@@ -1,5 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { Cron as CronScheduler } from 'croner';
+import { setTimeout as sleep } from 'node:timers/promises';
 
 import { RedisJobStore } from './redis-job-store.service';
 
@@ -15,6 +16,14 @@ export interface CronJobEntry {
   handler: () => unknown;
 }
 
+interface ClaimedJob {
+  name: string;
+  score: number;
+  claimId?: string;
+  attempt: number;
+  retry: boolean;
+}
+
 @Injectable()
 export class RedisPollLoop {
   private readonly logger = new Logger(RedisPollLoop.name);
@@ -22,6 +31,7 @@ export class RedisPollLoop {
   private abortController?: AbortController;
   private readonly jobs = new Map<string, CronJobEntry>();
   private readonly inFlight = new Set<Promise<unknown>>();
+  private readonly heartbeatRefs = new Set<NodeJS.Timeout>();
 
   constructor(private readonly store: RedisJobStore) {}
 
@@ -34,7 +44,9 @@ export class RedisPollLoop {
   }
 
   start(): void {
-    if (this.running) return;
+    if (this.running) {
+      return;
+    }
     this.running = true;
     this.abortController = new AbortController();
     void this.loop(this.abortController.signal);
@@ -45,17 +57,37 @@ export class RedisPollLoop {
     this.abortController?.abort();
 
     if (this.inFlight.size > 0) {
-      const deadline = new Promise<void>((resolve) => setTimeout(resolve, shutdownTimeout));
+      let deadlineRef: NodeJS.Timeout | undefined;
+      const deadline = new Promise<void>((resolve) => {
+        deadlineRef = setTimeout(resolve, shutdownTimeout);
+      });
       // oxlint-disable-next-line unicorn/no-useless-spread
       await Promise.race([Promise.allSettled([...this.inFlight]), deadline]);
+      if (deadlineRef) {
+        clearTimeout(deadlineRef);
+      }
     }
+    for (const heartbeat of this.heartbeatRefs) {
+      clearInterval(heartbeat);
+    }
+    this.heartbeatRefs.clear();
   }
 
   private async loop(signal: AbortSignal): Promise<void> {
     while (this.running && !signal.aborted) {
       try {
+        const recoveryTime = await this.store.getTime();
+        const recovered = await this.store.reclaimExpiredJob(recoveryTime);
+        if (recovered) {
+          await this.processClaim(recovered, recoveryTime);
+          continue;
+        }
+
         const next = await this.store.peekNextJob();
         const now = await this.store.getTime();
+        if (signal.aborted) {
+          break;
+        }
 
         if (!next) {
           await this.interruptibleSleep(DEFAULT_EMPTY_SLEEP_MS, signal);
@@ -65,7 +97,9 @@ export class RedisPollLoop {
 
         if (next.score > now) {
           await this.interruptibleSleep(Math.min(next.score - now, MAX_POLL_INTERVAL_MS), signal);
-          if (signal.aborted) break;
+          if (signal.aborted) {
+            break;
+          }
         }
 
         const claimedAt = await this.store.getTime();
@@ -75,22 +109,7 @@ export class RedisPollLoop {
           continue;
         }
 
-        const entry = this.jobs.get(claimed.name);
-        if (!entry) {
-          this.logger.warn(`Claimed unknown job: ${claimed.name}`);
-          continue;
-        }
-        const nextTs = this.computeNextOccurrence(entry);
-        await this.store.enqueueJob(claimed.name, nextTs);
-
-        if (claimedAt - claimed.score > entry.threshold) {
-          this.logger.warn(
-            `Skipping late job "${claimed.name}" (${claimedAt - claimed.score}ms overdue, threshold ${entry.threshold}ms)`,
-          );
-          continue;
-        }
-
-        this.dispatchHandler(entry);
+        await this.processClaim(claimed, claimedAt);
       } catch (error: unknown) {
         if (!signal.aborted) {
           this.logger.error('Poll loop error', error);
@@ -100,20 +119,84 @@ export class RedisPollLoop {
     }
   }
 
-  private dispatchHandler(entry: CronJobEntry): void {
-    const promise = Promise.resolve()
-      .then(() => entry.handler())
-      .catch((error: unknown) => {
-        this.logger.error(`Handler error for job "${entry.name}"`, error);
-      })
-      .finally(() => {
-        this.inFlight.delete(promise);
-      });
+  private async processClaim(claimed: ClaimedJob, claimedAt: number): Promise<void> {
+    const entry = this.jobs.get(claimed.name);
+    if (!entry) {
+      this.logger.warn(`Claimed unknown job: ${claimed.name}`);
+      if (claimed.claimId) {
+        await this.store.acknowledgeJob(claimed.claimId);
+      }
+      return;
+    }
 
-    this.inFlight.add(promise);
+    if (claimed.attempt > this.store.maxRetries) {
+      this.logger.error(`Dropping job "${claimed.name}" after ${this.store.maxRetries} retries`);
+      if (claimed.claimId) {
+        await this.store.acknowledgeJob(claimed.claimId);
+      }
+      return;
+    }
+
+    if (!claimed.retry) {
+      const nextTs = this.computeNextOccurrence(entry, claimedAt);
+      await this.store.enqueueJob(claimed.name, nextTs);
+    }
+
+    if (!claimed.retry && claimedAt - claimed.score > entry.threshold) {
+      this.logger.warn(
+        `Skipping late job "${claimed.name}" (${claimedAt - claimed.score}ms overdue, threshold ${entry.threshold}ms)`,
+      );
+      if (claimed.claimId) {
+        await this.store.acknowledgeJob(claimed.claimId);
+      }
+      return;
+    }
+
+    this.dispatchHandler(entry, claimed);
   }
 
-  private computeNextOccurrence(entry: CronJobEntry): number {
+  private dispatchHandler(entry: CronJobEntry, claimed: ClaimedJob): void {
+    const promise = Promise.resolve()
+      .then(() => entry.handler())
+      .then(() => (claimed.claimId ? this.store.acknowledgeJob(claimed.claimId) : undefined));
+
+    const heartbeat = claimed.claimId
+      ? setInterval(
+          () => {
+            void this.renewLease(claimed.claimId!);
+          },
+          Math.max(1, Math.floor(this.store.leaseDuration / 3)),
+        )
+      : undefined;
+    if (heartbeat) {
+      this.heartbeatRefs.add(heartbeat);
+    }
+
+    const trackedPromise = promise
+      .catch((error: unknown) => {
+        this.logger.error(`Handler error for job "${entry.name}" (attempt ${claimed.attempt + 1})`, error);
+      })
+      .finally(() => {
+        if (heartbeat) {
+          clearInterval(heartbeat);
+          this.heartbeatRefs.delete(heartbeat);
+        }
+        this.inFlight.delete(trackedPromise);
+      });
+
+    this.inFlight.add(trackedPromise);
+  }
+
+  private async renewLease(claimId: string): Promise<void> {
+    try {
+      const now = await this.store.getTime();
+      await this.store.extendLease(claimId, now);
+    } catch (error: unknown) {
+      this.logger.error(`Failed to renew scheduler lease "${claimId}"`, error);
+    }
+  }
+
+  private computeNextOccurrence(entry: CronJobEntry, redisTime: number): number {
     const next = new CronScheduler(entry.expression, {
       paused: true,
       ...(entry.timeZone
@@ -124,26 +207,18 @@ export class RedisPollLoop {
     }).nextRun();
     if (!next) {
       this.logger.error(`Cron expression "${entry.expression}" has no upcoming runs for job "${entry.name}".`);
-      return Date.now() + 86_400_000;
+      return redisTime + 86_400_000;
     }
     return next.getTime();
   }
 
-  private interruptibleSleep(ms: number, signal: AbortSignal): Promise<void> {
-    return new Promise<void>((resolve) => {
-      if (signal.aborted) {
-        resolve();
-        return;
+  private async interruptibleSleep(ms: number, signal: AbortSignal): Promise<void> {
+    try {
+      await sleep(ms, undefined, { signal });
+    } catch (error: unknown) {
+      if (!(error instanceof Error) || error.name !== 'AbortError') {
+        throw error;
       }
-      const timer = setTimeout(resolve, ms);
-      signal.addEventListener(
-        'abort',
-        () => {
-          clearTimeout(timer);
-          resolve();
-        },
-        { once: true },
-      );
-    });
+    }
   }
 }

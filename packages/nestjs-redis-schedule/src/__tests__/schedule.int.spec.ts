@@ -118,8 +118,8 @@ describe('@Cron decorator (integration)', () => {
 
     // Simulate Redis eviction / FLUSHDB - wipes ZSET and meta entirely
     await client.flushDb();
-    expect(await client.zCard('cron-test:jobs')).toBe(0);
-    expect(await client.hLen('cron-test:meta')).toBe(0);
+    expect(await client.zCard('cron-test:{schedule}:jobs')).toBe(0);
+    expect(await client.hLen('cron-test:{schedule}:meta')).toBe(0);
 
     // Second module instance boots against empty Redis - bootstrap must re-register
     const mod2 = await makeModule([TestService]);

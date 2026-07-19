@@ -15,6 +15,47 @@ redis.call('ZREM', KEYS[1], jobs[1])
 return {jobs[1], jobs[2]}
 `;
 
+const CLAIM_WITH_LEASE_SCRIPT = `
+local jobs = redis.call('ZRANGEBYSCORE', KEYS[1], '-inf', ARGV[1], 'WITHSCORES', 'LIMIT', 0, 1)
+if #jobs == 0 then return false end
+redis.call('ZREM', KEYS[1], jobs[1])
+local claimId = jobs[1] .. ':' .. jobs[2]
+local claim = cjson.encode({name = jobs[1], score = tonumber(jobs[2]), attempt = 0})
+redis.call('ZADD', KEYS[2], ARGV[2], claimId)
+redis.call('HSET', KEYS[3], claimId, claim)
+return {jobs[1], jobs[2], claimId, '0'}
+`;
+
+const RECLAIM_EXPIRED_SCRIPT = `
+local claims = redis.call('ZRANGEBYSCORE', KEYS[1], '-inf', ARGV[1], 'LIMIT', 0, 1)
+if #claims == 0 then return false end
+local claimId = claims[1]
+local raw = redis.call('HGET', KEYS[2], claimId)
+if not raw then
+  redis.call('ZREM', KEYS[1], claimId)
+  return false
+end
+local claim = cjson.decode(raw)
+claim.attempt = (claim.attempt or 0) + 1
+redis.call('ZADD', KEYS[1], ARGV[2], claimId)
+redis.call('HSET', KEYS[2], claimId, cjson.encode(claim))
+return {claim.name, tostring(claim.score), claimId, tostring(claim.attempt)}
+`;
+
+const ACKNOWLEDGE_SCRIPT = `
+redis.call('ZREM', KEYS[1], ARGV[1])
+redis.call('HDEL', KEYS[2], ARGV[1])
+return 1
+`;
+
+const EXTEND_LEASE_SCRIPT = `
+if redis.call('ZSCORE', KEYS[1], ARGV[1]) then
+  redis.call('ZADD', KEYS[1], 'XX', ARGV[2], ARGV[1])
+  return 1
+end
+return 0
+`;
+
 // KEYS[1] = metaKey, KEYS[2] = jobsKey
 // ARGV[1] = name, ARGV[2] = expression, ARGV[3] = nextTs
 const REGISTER_SCRIPT = `
@@ -32,13 +73,24 @@ export class RedisJobStore {
   private readonly client: RedisClientLike;
   private readonly jobsKey: string;
   private readonly metaKey: string;
+  private readonly processingKey: string;
+  private readonly claimsKey: string;
   private readonly scriptShas = new Map<string, string>();
+  readonly executionMode: 'at-most-once' | 'at-least-once';
+  readonly leaseDuration: number;
+  readonly maxRetries: number;
 
   constructor(@Inject(SCHEDULE_MODULE_OPTIONS) options: ScheduleModuleOptions) {
     this.client = options.client as RedisClientLike;
     const prefix = options.keyPrefix ?? 'scheduler';
-    this.jobsKey = `${prefix}:jobs`;
-    this.metaKey = `${prefix}:meta`;
+    // The shared hash tag keeps all script keys in one Redis Cluster slot.
+    this.jobsKey = `${prefix}:{schedule}:jobs`;
+    this.metaKey = `${prefix}:{schedule}:meta`;
+    this.processingKey = `${prefix}:{schedule}:processing`;
+    this.claimsKey = `${prefix}:{schedule}:claims`;
+    this.executionMode = options.executionMode ?? 'at-most-once';
+    this.leaseDuration = options.leaseDuration ?? 30_000;
+    this.maxRetries = options.maxRetries ?? 3;
   }
 
   /**
@@ -57,22 +109,60 @@ export class RedisJobStore {
    * Atomically claims the next due job (score ≤ nowMs).
    * Returns the job name and its scheduled score if claimed, null otherwise.
    */
-  async claimDueJob(nowMs: number): Promise<{ name: string; score: number } | null> {
-    const result = await this.execScript(CLAIM_SCRIPT, {
-      keys: [this.jobsKey],
-      arguments: [nowMs.toString()],
+  async claimDueJob(
+    nowMs: number,
+  ): Promise<{ name: string; score: number; claimId?: string; attempt: number; retry: false } | null> {
+    const leased = this.executionMode === 'at-least-once';
+    const result = await this.execScript(leased ? CLAIM_WITH_LEASE_SCRIPT : CLAIM_SCRIPT, {
+      keys: leased ? [this.jobsKey, this.processingKey, this.claimsKey] : [this.jobsKey],
+      arguments: leased ? [nowMs.toString(), (nowMs + this.leaseDuration).toString()] : [nowMs.toString()],
     });
 
     if (!result) {
       return null;
     }
 
-    const [name, scoreStr] = result as [string, string];
+    const [name, scoreStr, claimId] = result as [string, string, string?];
 
     return {
       name,
       score: parseFloat(scoreStr),
+      claimId,
+      attempt: 0,
+      retry: false,
     };
+  }
+
+  async reclaimExpiredJob(
+    nowMs: number,
+  ): Promise<{ name: string; score: number; claimId: string; attempt: number; retry: true } | null> {
+    if (this.executionMode !== 'at-least-once') {
+      return null;
+    }
+    const result = await this.execScript(RECLAIM_EXPIRED_SCRIPT, {
+      keys: [this.processingKey, this.claimsKey],
+      arguments: [nowMs.toString(), (nowMs + this.leaseDuration).toString()],
+    });
+    if (!result) {
+      return null;
+    }
+    const [name, score, claimId, attempt] = result as [string, string, string, string];
+    return { name, score: Number(score), claimId, attempt: Number(attempt), retry: true };
+  }
+
+  async acknowledgeJob(claimId: string): Promise<void> {
+    await this.execScript(ACKNOWLEDGE_SCRIPT, {
+      keys: [this.processingKey, this.claimsKey],
+      arguments: [claimId],
+    });
+  }
+
+  async extendLease(claimId: string, nowMs: number): Promise<boolean> {
+    const result = await this.execScript(EXTEND_LEASE_SCRIPT, {
+      keys: [this.processingKey],
+      arguments: [claimId, (nowMs + this.leaseDuration).toString()],
+    });
+    return result === 1;
   }
 
   /**

@@ -3,16 +3,18 @@ import type { RedisClientType } from 'redis';
 import { Test } from '@nestjs/testing';
 import { createClient } from 'redis';
 
+import type { ScheduleModuleOptions } from '../interfaces';
+
 import { SCHEDULE_MODULE_OPTIONS } from '../constants';
 import { RedisJobStore, RedisPollLoop } from '../redis';
 
-const makeStore = async (client: RedisClientType, keyPrefix = 'test') => {
+const makeStore = async (client: RedisClientType, keyPrefix = 'test', options: Partial<ScheduleModuleOptions> = {}) => {
   const module = await Test.createTestingModule({
     providers: [
       RedisJobStore,
       {
         provide: SCHEDULE_MODULE_OPTIONS,
-        useValue: { client, keyPrefix },
+        useValue: { client, keyPrefix, ...options },
       },
     ],
   }).compile();
@@ -138,4 +140,35 @@ describe('RedisPollLoop (integration)', () => {
     expect(callCount).toBeGreaterThanOrEqual(6);
     expect(callCount).toBeLessThanOrEqual(7);
   }, 15_000);
+
+  it('retries a failed handler in at-least-once mode', async () => {
+    const store = await makeStore(client, 'retry-test', {
+      executionMode: 'at-least-once',
+      leaseDuration: 100,
+      maxRetries: 2,
+    });
+    const loop = new RedisPollLoop(store);
+    let callCount = 0;
+    const now = await store.getTime();
+    const expression = '0 0 1 1 *';
+    await store.registerJob('retry-job', expression, now - 10);
+    loop.registerJob({
+      name: 'retry-job',
+      expression,
+      threshold: 250,
+      handler: () => {
+        callCount++;
+        if (callCount === 1) {
+          throw new Error('retry me');
+        }
+      },
+    });
+
+    loop.start();
+    await new Promise((resolve) => setTimeout(resolve, 2_500));
+    await loop.stop(100);
+
+    expect(callCount).toBe(2);
+    expect(await client.zCard('retry-test:{schedule}:processing')).toBe(0);
+  }, 10_000);
 });

@@ -45,8 +45,8 @@ describe('SchedulerOrchestrator - disabled cron jobs', () => {
     const mod = await makeModule([DisabledCronService]);
     await mod.close();
 
-    expect(await client.zScore('disabled-test:jobs', 'disabled-job')).toBeNull();
-    expect(await client.hGet('disabled-test:meta', 'disabled-job')).toBeNull();
+    expect(await client.zScore('disabled-test:{schedule}:jobs', 'disabled-job')).toBeNull();
+    expect(await client.hGet('disabled-test:{schedule}:meta', 'disabled-job')).toBeNull();
   });
 
   it('never fires the handler for a disabled job', async () => {
@@ -76,8 +76,8 @@ describe('SchedulerOrchestrator - disabled cron jobs', () => {
     await mod.close();
 
     // enabled job must be in Redis
-    expect(await client.zScore('disabled-test:jobs', 'test-job')).not.toBeNull();
+    expect(await client.zScore('disabled-test:{schedule}:jobs', 'test-job')).not.toBeNull();
     // disabled job must not be
-    expect(await client.zScore('disabled-test:jobs', 'disabled-job')).toBeNull();
+    expect(await client.zScore('disabled-test:{schedule}:jobs', 'disabled-job')).toBeNull();
   });
 });

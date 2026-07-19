@@ -65,7 +65,7 @@ export class ScheduleExplorer implements OnModuleInit {
           return;
         }
 
-        const cronFn = this.wrapFunctionInTryCatchBlocks(methodRef, instance);
+        const cronFn = this.bindFunction(methodRef, instance);
         const resolvedName =
           cronMetadata.name ??
           `${(instance as { constructor?: { name?: string } }).constructor?.name ?? 'Unknown'}.${key}`;
@@ -89,7 +89,7 @@ export class ScheduleExplorer implements OnModuleInit {
         const name =
           this.metadataAccessor.getSchedulerName(methodRef) ??
           `${(instance as { constructor?: { name?: string } }).constructor?.name ?? 'Unknown'}.${key}`;
-        const timeoutFn = this.wrapFunctionInTryCatchBlocks(methodRef, instance);
+        const timeoutFn = this.bindFunction(methodRef, instance);
 
         this.logger.warn(`@Timeout("${name}") runs on EVERY instance — only @Cron is distributed via Redis.`);
 
@@ -109,7 +109,7 @@ export class ScheduleExplorer implements OnModuleInit {
         const name =
           this.metadataAccessor.getSchedulerName(methodRef) ??
           `${(instance as { constructor?: { name?: string } }).constructor?.name ?? 'Unknown'}.${key}`;
-        const intervalFn = this.wrapFunctionInTryCatchBlocks(methodRef, instance);
+        const intervalFn = this.bindFunction(methodRef, instance);
 
         this.logger.warn(`@Interval("${name}") runs on EVERY instance — only @Cron is distributed via Redis.`);
 
@@ -159,13 +159,7 @@ export class ScheduleExplorer implements OnModuleInit {
     }
   }
 
-  private wrapFunctionInTryCatchBlocks(methodRef: Function, instance: object) {
-    return async (...args: unknown[]) => {
-      try {
-        await methodRef.call(instance, ...args);
-      } catch (error) {
-        this.logger.error(error);
-      }
-    };
+  private bindFunction(methodRef: Function, instance: object) {
+    return (...args: unknown[]) => methodRef.call(instance, ...args);
   }
 }

@@ -8,7 +8,8 @@ Drop-in replacement for `@nestjs/schedule` with Redis-backed distributed cron ex
 - **Distributed cron execution** — Redis ZSET + atomic Lua script guarantees exactly one instance fires per tick
 - **Persistence across restarts** — next-run timestamps are stored in Redis; missed jobs caught on startup
 - **Missed-execution handling** — configurable threshold distinguishes catchup executions from truly-stale skips
-- **Works with any `redis` v5 client** — `RedisClientType`, `RedisClusterType`, `RedisSentinelType`
+- **Optional at-least-once execution** — renewable leases recover work after handler or process failures
+- **Works with any `redis` v6 client** — `RedisClientType`, `RedisClusterType`, `RedisSentinelType`
 
 ## Installation
 
@@ -42,7 +43,7 @@ export class AppModule {}
 
 ```typescript
 import { Module } from '@nestjs/common';
-import { RedisModule, RedisToken } from '@codylabs/nestjs-redis-client';
+import { RedisModule, RedisToken } from '@codylabs/nestjs-redis';
 import { ScheduleModule } from '@codylabs/nestjs-redis-schedule';
 
 @Module({
@@ -59,14 +60,42 @@ export class AppModule {}
 
 ## Module options
 
-| Option            | Type                                                       | Default      | Description                                                 |
-| ----------------- | ---------------------------------------------------------- | ------------ | ----------------------------------------------------------- |
-| `client`          | `RedisClientType \| RedisClusterType \| RedisSentinelType` | **required** | Connected Redis client                                      |
-| `keyPrefix`       | `string`                                                   | `'schedule'` | Prefix for all Redis keys created by this module            |
-| `shutdownTimeout` | `number`                                                   | `5000`       | Max ms to wait for in-flight handlers to finish on shutdown |
-| `cronJobs`        | `boolean`                                                  | `true`       | Enable `@Cron` discovery                                    |
-| `intervals`       | `boolean`                                                  | `true`       | Enable `@Interval` discovery                                |
-| `timeouts`        | `boolean`                                                  | `true`       | Enable `@Timeout` discovery                                 |
+| Option            | Type                                                       | Default          | Description                                                 |
+| ----------------- | ---------------------------------------------------------- | ---------------- | ----------------------------------------------------------- |
+| `client`          | `RedisClientType \| RedisClusterType \| RedisSentinelType` | **required**     | Connected Redis client                                      |
+| `keyPrefix`       | `string`                                                   | `'scheduler'`    | Prefix for all Redis keys created by this module            |
+| `shutdownTimeout` | `number`                                                   | `5000`           | Max ms to wait for in-flight handlers to finish on shutdown |
+| `executionMode`   | `'at-most-once' \| 'at-least-once'`                        | `'at-most-once'` | Execution delivery guarantee                                |
+| `leaseDuration`   | `number`                                                   | `30000`          | Lease duration in ms; renewed while a handler is running    |
+| `maxRetries`      | `number`                                                   | `3`              | Retries after a failed or interrupted leased execution      |
+| `cronJobs`        | `boolean`                                                  | `true`           | Enable `@Cron` discovery                                    |
+| `intervals`       | `boolean`                                                  | `true`           | Enable `@Interval` discovery                                |
+| `timeouts`        | `boolean`                                                  | `true`           | Enable `@Timeout` discovery                                 |
+
+### Reliable execution
+
+The default `at-most-once` mode preserves the original behavior: a due occurrence is removed before its handler
+runs, so it is not duplicated but can be lost if the process exits at that point. Enable leased execution when a
+missed occurrence is less acceptable than a possible duplicate:
+
+```typescript
+ScheduleModule.forRootAsync({
+  inject: [RedisToken()],
+  useFactory: (client) => ({
+    client,
+    executionMode: 'at-least-once',
+    leaseDuration: 30_000,
+    maxRetries: 3,
+  }),
+});
+```
+
+Leases are renewed while handlers run. A failed handler is retried after its lease expires, and an occurrence
+claimed by a process that crashes is recovered by another instance. Handlers used with `at-least-once` mode must
+be idempotent because a crash between completing the side effect and acknowledging the lease can cause a retry.
+
+Redis keys use a shared `{schedule}` hash tag so all atomic scripts also work with Redis Cluster. Upgrading from a
+version that used `<prefix>:jobs` keys creates a fresh schedule under the new key layout.
 
 ## Decorators
 
