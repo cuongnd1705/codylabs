@@ -16,9 +16,9 @@ const noopLogger: RedisLogger = {
 @Module({})
 export class RedisModule extends ConfigurableModuleClass implements OnApplicationShutdown {
   private static readonly defaultLogger = new Logger('RedisModule');
-  private static activeLogger: RedisLogger = RedisModule.defaultLogger;
 
   protected connectionName?: string;
+  protected connectionLogger: RedisLogger = RedisModule.defaultLogger;
 
   constructor(private moduleRef: ModuleRef) {
     super();
@@ -39,12 +39,12 @@ export class RedisModule extends ConfigurableModuleClass implements OnApplicatio
   public static forRoot(options: RedisModuleForRootOptions = {}): DynamicModule {
     const baseModule = super.forRoot(options);
     const connectionName = options?.connectionName;
-    RedisModule.activeLogger = this.resolveLogger(options?.logger);
+    const logger = this.resolveLogger(options?.logger);
 
     return {
       global: options?.isGlobal ?? false,
-      module: this.createNamedModule(connectionName),
-      providers: [...(baseModule.providers || []), this.getRedisClientProvider(connectionName)],
+      module: this.createNamedModule(connectionName, logger),
+      providers: [...(baseModule.providers || []), this.getRedisClientProvider(connectionName, logger)],
       exports: [RedisToken(connectionName)],
     };
   }
@@ -52,13 +52,13 @@ export class RedisModule extends ConfigurableModuleClass implements OnApplicatio
   public static forRootAsync(options: RedisModuleAsyncOptions): DynamicModule {
     const baseModule = super.forRootAsync(options);
     const connectionName = options.connectionName;
-    RedisModule.activeLogger = this.resolveLogger(options.logger);
+    const logger = this.resolveLogger(options.logger);
 
     return {
       global: options.isGlobal ?? false,
-      module: this.createNamedModule(connectionName),
+      module: this.createNamedModule(connectionName, logger),
       imports: options.imports || [],
-      providers: [...(baseModule.providers || []), this.getRedisClientProvider(connectionName)],
+      providers: [...(baseModule.providers || []), this.getRedisClientProvider(connectionName, logger)],
       exports: [RedisToken(connectionName)],
     };
   }
@@ -70,9 +70,10 @@ export class RedisModule extends ConfigurableModuleClass implements OnApplicatio
     };
   }
 
-  private static createNamedModule(connectionName?: string): typeof RedisModule {
+  private static createNamedModule(connectionName: string | undefined, logger: RedisLogger): typeof RedisModule {
     const NamedModule = class extends RedisModule {
       override connectionName = connectionName;
+      override connectionLogger = logger;
     };
 
     Object.defineProperty(NamedModule, 'name', {
@@ -82,7 +83,7 @@ export class RedisModule extends ConfigurableModuleClass implements OnApplicatio
     return NamedModule;
   }
 
-  private static getRedisClientProvider(connectionName?: string): FactoryProvider {
+  private static getRedisClientProvider(connectionName: string | undefined, logger: RedisLogger): FactoryProvider {
     return {
       inject: [MODULE_OPTIONS_TOKEN],
       provide: RedisToken(connectionName),
@@ -107,39 +108,48 @@ export class RedisModule extends ConfigurableModuleClass implements OnApplicatio
 
         function addListeners(client: RedisInstance, redisConnectionName?: string): void {
           client.on('connect', () => {
-            RedisModule.log(`[Event=connect] Connection initiated to Redis server`, redisConnectionName);
+            RedisModule.log(logger, `[Event=connect] Connection initiated to Redis server`, redisConnectionName);
           });
 
           client.on('ready', () => {
-            RedisModule.log(`[Event=ready] Redis client is ready to accept commands`, redisConnectionName);
+            RedisModule.log(logger, `[Event=ready] Redis client is ready to accept commands`, redisConnectionName);
           });
 
           client.on('end', () => {
-            RedisModule.log(`[Event=end] Connection closed (disconnected from Redis server)`, redisConnectionName);
+            RedisModule.log(
+              logger,
+              `[Event=end] Connection closed (disconnected from Redis server)`,
+              redisConnectionName,
+            );
           });
 
           client.on('reconnecting', () => {
-            RedisModule.log(`[Event=reconnecting] Attempting to reconnect to Redis server`, redisConnectionName);
+            RedisModule.log(
+              logger,
+              `[Event=reconnecting] Attempting to reconnect to Redis server`,
+              redisConnectionName,
+            );
           });
 
           client.on('error', (err) => {
             RedisModule.err(
+              logger,
               `[Event=error] Redis connection error (network issue): ${err.message}`,
               redisConnectionName,
             );
           });
         }
 
-        RedisModule.log(`Creating Redis client...`, connectionName);
+        RedisModule.log(logger, `Creating Redis client...`, connectionName);
 
         const client = getClient();
         addListeners(client, connectionName);
 
-        RedisModule.log(`Connecting to Redis...`, connectionName);
+        RedisModule.log(logger, `Connecting to Redis...`, connectionName);
 
         await client.connect();
 
-        RedisModule.log(`Redis client connected`, connectionName);
+        RedisModule.log(logger, `Redis client connected`, connectionName);
 
         return client;
       },
@@ -147,23 +157,23 @@ export class RedisModule extends ConfigurableModuleClass implements OnApplicatio
   }
 
   async onApplicationShutdown() {
-    RedisModule.log(`Closing Redis connection...`, this.connectionName);
+    RedisModule.log(this.connectionLogger, `Closing Redis connection...`, this.connectionName);
 
     try {
       await this.moduleRef.get<RedisInstance>(RedisToken(this.connectionName)).quit();
-      RedisModule.log(`Redis connection closed`, this.connectionName);
+      RedisModule.log(this.connectionLogger, `Redis connection closed`, this.connectionName);
     } catch (error) {
-      RedisModule.activeLogger.warn(
+      this.connectionLogger.warn(
         `[Connection=${this.connectionName || '<empty>'}]: Failed to close Redis connection: ${error}`,
       );
     }
   }
 
-  private static log(message: string, connectionName: string | undefined = '<empty>'): void {
-    this.activeLogger.log(`[Connection=${connectionName}]: ${message}`);
+  private static log(logger: RedisLogger, message: string, connectionName: string | undefined = '<empty>'): void {
+    logger.log(`[Connection=${connectionName}]: ${message}`);
   }
 
-  private static err(message: string, connectionName: string | undefined = '<empty>'): void {
-    this.activeLogger.error(`[Connection=${connectionName}]: ${message}`);
+  private static err(logger: RedisLogger, message: string, connectionName: string | undefined = '<empty>'): void {
+    logger.error(`[Connection=${connectionName}]: ${message}`);
   }
 }
