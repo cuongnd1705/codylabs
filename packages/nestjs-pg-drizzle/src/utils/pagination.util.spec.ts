@@ -6,7 +6,7 @@ import {
   encodeCursor,
   parseOrderByString,
   validatePagination,
-} from './pagination.utils';
+} from './pagination.util';
 
 describe('repository pagination utilities', () => {
   it('round-trips URL-safe cursor values without losing bigint and date types', () => {

@@ -1,6 +1,6 @@
 {
   "name": "@codylabs/nestjs-redis-schedule",
-  "version": "0.0.2",
+  "version": "0.1.0",
   "description": "Drop-in replacement for @nestjs/schedule with Redis-backed distributed cron execution",
   "homepage": "https://github.com/cuongnd1705/codylabs#readme",
   "bugs": {
