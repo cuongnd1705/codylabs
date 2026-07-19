@@ -2,20 +2,20 @@
   "name": "@codylabs/typescript-configs",
   "version": "0.0.9",
   "description": "Shared TypeScript configurations",
-  "license": "MIT",
-  "author": "Cody Nguyen",
-  "publishConfig": {
-    "access": "public"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/cuongnd1705/codylabs.git"
-  },
   "homepage": "https://github.com/cuongnd1705/codylabs#readme",
   "bugs": {
     "url": "https://github.com/cuongnd1705/codylabs/issues"
   },
+  "license": "MIT",
+  "author": "Cody Nguyen",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/cuongnd1705/codylabs.git"
+  },
   "files": [
     "*.json"
-  ]
+  ],
+  "publishConfig": {
+    "access": "public"
+  }
 }

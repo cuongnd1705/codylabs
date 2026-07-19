@@ -2,8 +2,16 @@
   "name": "@codylabs/nestjs-redis-throttler-storage",
   "version": "0.0.2",
   "description": "Redis storage for NestJS Throttler enabling distributed rate limiting across multiple application instances",
+  "homepage": "https://github.com/cuongnd1705/codylabs#readme",
+  "bugs": {
+    "url": "https://github.com/cuongnd1705/codylabs/issues"
+  },
   "license": "MIT",
   "author": "Cody Nguyen",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/cuongnd1705/codylabs.git"
+  },
   "files": [
     "dist/**"
   ],
@@ -33,13 +41,5 @@
     "@nestjs/common": "^11.0.0",
     "@nestjs/throttler": "^6.0.0",
     "redis": "^6.0.0"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/cuongnd1705/codylabs.git"
-  },
-  "homepage": "https://github.com/cuongnd1705/codylabs#readme",
-  "bugs": {
-    "url": "https://github.com/cuongnd1705/codylabs/issues"
   }
 }
