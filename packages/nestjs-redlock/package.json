@@ -35,6 +35,7 @@
     "test:watch": "jest --watch"
   },
   "devDependencies": {
+    "@codylabs/redlock": "workspace:*",
     "@codylabs/typescript-configs": "workspace:*",
     "@nestjs/testing": "^11.1.28"
   },
