@@ -1,0 +1,11 @@
+import type { Config } from 'jest';
+
+export default async (): Promise<Config> => ({
+  moduleFileExtensions: ['js', 'json', 'ts'],
+  rootDir: 'src',
+  testEnvironment: 'node',
+  testRegex: ['.*\\.test\\.ts$', '.*\\.spec\\.ts$'],
+  transform: {
+    '^.+\\.(t|j)s$': 'ts-jest',
+  },
+});

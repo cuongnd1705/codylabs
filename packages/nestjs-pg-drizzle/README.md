@@ -212,6 +212,10 @@ const next = await this.usersRepository.paginateByCursor({
 });
 ```
 
+Pagination requires positive integer page values and a `pageSize` between 1 and 1000. Order expressions only
+accept `asc` or `desc`. Cursor tokens are opaque, URL-safe, versioned values; applications should return them to
+the repository unchanged rather than decoding or constructing them.
+
 ### Transactions
 
 Use `withTransaction()` on any repository to start a transaction. All repository methods accept an optional `tx` option to participate in an existing transaction.

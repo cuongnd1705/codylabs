@@ -14,8 +14,10 @@ import {
   type BuildQueryResult,
   DBQueryConfig,
   type InferSelectModel,
+  type SQL,
   type TablesRelationalConfig,
   getColumns,
+  getTableName,
   operators,
   relationsFilterToSQL,
   sql,
@@ -28,7 +30,6 @@ import {
   FindManyOpts,
   FindManyQueryConfig,
   NumericKeys,
-  OrderByField,
   PaginateByCursorOpts,
   PaginateByCursorQueryConfig,
   PaginateByOffsetOpts,
@@ -36,7 +37,17 @@ import {
   SelectResultFields,
   Transaction,
 } from '../interfaces';
-import { camel } from '../utils';
+import {
+  appendStableTiebreaker,
+  buildCursorConditions,
+  camel,
+  decodeCursor,
+  encodeCursor,
+  parseOrderByString,
+  validateOrderByFields,
+  validatePagination,
+  withSoftDeleteFilter,
+} from '../utils';
 
 const objectKeys = <O extends object>(obj: O): (keyof O)[] => Object.keys(obj) as (keyof O)[];
 
@@ -61,13 +72,7 @@ export abstract class BaseRepository<
   }
 
   get alias(): string {
-    const aliasSymbol = Object.getOwnPropertySymbols(this.table).find((k) => k.toString() === 'Symbol(drizzle:Name)');
-
-    if (aliasSymbol) {
-      return camel((this.table as any)[aliasSymbol].replace('_private_', ''));
-    }
-
-    return undefined;
+    return camel(getTableName(this.table).replace('_private_', ''));
   }
 
   async withTransaction<T>(fn: (tx: Transaction<TRel>) => Promise<T>): Promise<T> {
@@ -96,137 +101,24 @@ export abstract class BaseRepository<
   }
 
   /**
-   * Wraps the given query config's `where` clause to additionally filter out soft-deleted rows
-   * (rows where `deleteTime IS NULL`). No-op when the table has no `deleteTime` column.
-   *
-   * Accepts only the Drizzle relational filter object form. Raw SQL and callback `where` forms
-   * are NOT handled here — those are resolved by callers like `delete`, `softDelete`, and `update`.
+   * Resolves all supported Drizzle where forms behind one compatibility boundary.
    */
-  private withSoftDeleteFilter<QConfig extends FindManyQueryConfig<TRel, V>>(
-    config: Omit<QConfig, 'tx' | 'showDeleted'>,
-  ): Omit<QConfig, 'tx' | 'showDeleted'> {
-    if (!this.hasSoftDelete()) {
-      return config;
+  private resolveWhere(where: FindManyQueryConfig<TRel, V>['where']): SQL<unknown> | undefined {
+    if (!where) {
+      return undefined;
     }
 
-    const softDeleteFilter = {
-      deleteTime: {
-        isNull: true,
-      },
-    };
-
-    if (!config.where) {
-      return {
-        ...config,
-        where: softDeleteFilter,
-      };
+    if (typeof where === 'object' && 'queryChunks' in where) {
+      return where as unknown as SQL<unknown>;
     }
 
-    return {
-      ...config,
-      where: {
-        AND: [config.where, softDeleteFilter],
-      },
-    };
-  }
+    if (typeof where === 'function') {
+      const callback = where as unknown as (columns: unknown, queryOperators: typeof operators) => SQL<unknown>;
 
-  /** Encodes a cursor value object to a base64 string. */
-  private encodeCursor(values: Record<string, unknown>): string {
-    return Buffer.from(JSON.stringify(values)).toString('base64');
-  }
-
-  /** Decodes a base64 cursor string back to its original value object. */
-  private decodeCursor(token: string): Record<string, unknown> {
-    try {
-      return JSON.parse(Buffer.from(token, 'base64').toString('utf8'));
-    } catch {
-      throw new BadRequestException('Invalid page token');
-    }
-  }
-
-  /**
-   * Builds a cursor SQL condition for multi-field keyset pagination.
-   *
-   * For N sort fields, generates a series of OR-ed conditions where each term
-   * requires all preceding fields to equal their cursor values, and the current
-   * field to advance past its cursor value:
-   *
-   *   (f0 > v0)
-   *   OR (f0 = v0 AND f1 > v1)
-   *   OR (f0 = v0 AND f1 = v1 AND f2 > v2)
-   *   ...
-   *
-   * `>` / `<` are chosen per-field based on the field's own `direction`.
-   */
-  private buildCursorConditions(orderBy: OrderByField[], cursor: Record<string, unknown>) {
-    const conditions: any[] = [];
-
-    for (let i = 0; i < orderBy.length; i++) {
-      const current = orderBy[i]!;
-
-      const equals = {};
-
-      for (let j = 0; j < i; j++) {
-        const prev = orderBy[j]!;
-
-        Object.assign(equals, {
-          [prev.key]: cursor[prev.key],
-        });
-      }
-
-      const comparison =
-        current.direction === 'asc'
-          ? {
-              [current.key]: {
-                gt: cursor[current.key],
-              },
-            }
-          : {
-              [current.key]: {
-                lt: cursor[current.key],
-              },
-            };
-
-      conditions.push({
-        AND: [equals, comparison],
-      });
+      return callback(getColumns(this.table), operators);
     }
 
-    return {
-      OR: conditions,
-    };
-  }
-
-  private parseOrderByString(orderByStr?: string): { key: string; direction: 'asc' | 'desc' }[] {
-    if (!orderByStr) {
-      return [];
-    }
-
-    return orderByStr.split(',').map((part) => {
-      const [key, direction] = part.split(':');
-
-      return {
-        key: key!,
-        direction: (direction ?? 'asc') as 'asc' | 'desc',
-      };
-    });
-  }
-
-  private mapOrderByToColumns(parsed: { key: string; direction: 'asc' | 'desc' }[]): OrderByField[] {
-    return parsed.map(({ key, direction }) => {
-      if (!(key in this.table)) {
-        throw new BadRequestException(`Invalid order field '${key}' for table '${this.tableName as string}'`);
-      }
-
-      if (!['asc', 'desc'].includes(direction.toLowerCase())) {
-        throw new BadRequestException(`Invalid order direction '${direction}'. Must be 'asc' or 'desc'`);
-      }
-
-      return {
-        key,
-        direction,
-      };
-    });
+    return this.filterToSQL(where);
   }
 
   /**
@@ -437,13 +329,7 @@ export abstract class BaseRepository<
     let where;
 
     if (opts?.where) {
-      if ('queryChunks' in opts.where) {
-        where = opts.where;
-      } else if (typeof opts.where === 'function') {
-        where = (opts.where as any)(getColumns(this.table), operators);
-      } else if (typeof opts.where === 'object') {
-        where = this.filterToSQL(opts.where);
-      }
+      where = this.resolveWhere(opts.where);
     }
 
     const qb: any = (opts?.tx || this.db).delete(this.table).where(where);
@@ -489,13 +375,7 @@ export abstract class BaseRepository<
     let where;
 
     if (opts?.where) {
-      if ('queryChunks' in opts.where) {
-        where = opts.where;
-      } else if (typeof opts.where === 'function') {
-        where = (opts.where as any)(getColumns(this.table), operators);
-      } else if (typeof opts.where === 'object') {
-        where = this.filterToSQL(opts.where);
-      }
+      where = this.resolveWhere(opts.where);
     }
 
     const qb: any = (opts?.tx || this.db)
@@ -534,7 +414,7 @@ export abstract class BaseRepository<
     const { tx, showDeleted, ...config } = opts || ({} as any);
     const qb = tx || this.db;
 
-    const finalConfig = showDeleted ? config : this.withSoftDeleteFilter(config);
+    const finalConfig = showDeleted ? config : withSoftDeleteFilter(config, this.hasSoftDelete());
 
     const row = await qb.query[this.tableName].findFirst(finalConfig || {});
 
@@ -590,7 +470,7 @@ export abstract class BaseRepository<
     const { tx, showDeleted, ...config } = opts || ({} as any);
     const qb = tx || this.db;
 
-    const finalConfig = showDeleted ? config : this.withSoftDeleteFilter(config);
+    const finalConfig = showDeleted ? config : withSoftDeleteFilter(config, this.hasSoftDelete());
 
     const rows = await qb.query[this.tableName].findMany(finalConfig || {});
 
@@ -639,13 +519,7 @@ export abstract class BaseRepository<
     let where;
 
     if (opts?.where) {
-      if ('queryChunks' in opts.where) {
-        where = opts.where;
-      } else if (typeof opts.where === 'function') {
-        where = (opts.where as any)(getColumns(this.table), operators);
-      } else if (typeof opts.where === 'object') {
-        where = this.filterToSQL(opts.where);
-      }
+      where = this.resolveWhere(opts.where);
     }
 
     await this.beforeUpdate(value);
@@ -809,7 +683,7 @@ export abstract class BaseRepository<
   }): Promise<boolean> {
     const { tx, showDeleted, ...config } = opts || {};
 
-    const finalConfig = showDeleted ? config : this.withSoftDeleteFilter(config as any);
+    const finalConfig = showDeleted ? config : withSoftDeleteFilter(config, this.hasSoftDelete());
 
     let where;
 
@@ -839,7 +713,7 @@ export abstract class BaseRepository<
   }): Promise<number> {
     const { showDeleted, ...config } = opts || {};
 
-    const finalConfig = showDeleted ? config : this.withSoftDeleteFilter(config as any);
+    const finalConfig = showDeleted ? config : withSoftDeleteFilter(config, this.hasSoftDelete());
 
     let where;
 
@@ -1017,15 +891,17 @@ export abstract class BaseRepository<
 
     const countConfig = showDeleted
       ? { where: config.where }
-      : this.withSoftDeleteFilter({ where: config.where } as any);
+      : withSoftDeleteFilter({ where: config.where }, this.hasSoftDelete());
     let countWhere;
 
     if (countConfig.where) {
       countWhere = this.filterToSQL(countConfig.where);
     }
 
-    const parsed = this.parseOrderByString(orderBy ?? 'id');
-    const orderByFields = this.mapOrderByToColumns(parsed);
+    validatePagination(page, pageSize);
+
+    const parsed = parseOrderByString(orderBy ?? 'id');
+    const orderByFields = validateOrderByFields(parsed, new Set(this.columns.map(String)), this.tableName as string);
 
     const orderByConditions = {} as Record<string, 'asc' | 'desc'>;
 
@@ -1081,8 +957,14 @@ export abstract class BaseRepository<
   async paginateByCursor<QConfig extends PaginateByCursorQueryConfig<TRel, V>>(opts?: PaginateByCursorOpts<QConfig>) {
     const { pageSize = 10, pageToken = null, orderBy, showDeleted, tx, ...config } = opts || ({} as any);
 
-    const parsed = this.parseOrderByString(orderBy ?? 'id');
-    const orderByFields = this.mapOrderByToColumns(parsed);
+    validatePagination(1, pageSize);
+
+    const parsed = parseOrderByString(orderBy ?? 'id');
+    const validColumns = new Set(this.columns.map(String));
+    const orderByFields = appendStableTiebreaker(
+      validateOrderByFields(parsed, validColumns, this.tableName as string),
+      validColumns,
+    );
 
     const orderByConditions = {} as Record<string, 'asc' | 'desc'>;
 
@@ -1095,9 +977,9 @@ export abstract class BaseRepository<
     let cursorConditions;
 
     if (pageToken) {
-      const cursor = this.decodeCursor(pageToken);
+      const cursor = decodeCursor(pageToken, orderByFields);
 
-      cursorConditions = this.buildCursorConditions(orderByFields, cursor);
+      cursorConditions = buildCursorConditions(orderByFields, cursor);
     }
 
     const combinedWhere: any = {};
@@ -1120,7 +1002,7 @@ export abstract class BaseRepository<
     }
 
     const nextPageToken = hasNextPage
-      ? this.encodeCursor(Object.fromEntries(orderByFields.map(({ key }) => [key, rows[rows.length - 1]![key]])))
+      ? encodeCursor(Object.fromEntries(orderByFields.map(({ key }) => [key, rows[rows.length - 1]![key]])))
       : null;
 
     return {
