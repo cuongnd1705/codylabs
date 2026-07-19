@@ -29,7 +29,9 @@ export function processEnvLoader(options: ProcessEnvLoaderOptions = {}): Loader 
     const nested: Record<string, unknown> = {};
 
     for (const [key, value] of Object.entries(process.env)) {
-      if (value === undefined) continue;
+      if (value === undefined) {
+        continue;
+      }
 
       const parts = key.toLowerCase().split(nestingSeparator);
       const coerced = destr(value);

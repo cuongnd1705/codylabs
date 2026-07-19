@@ -33,7 +33,9 @@
       {
         "allowWithDecorator": true
       }
-    ]
+    ],
+    "eslint/no-underscore-dangle": "off",
+    "eslint/curly": ["error", "all"]
   },
   "overrides": [
     {

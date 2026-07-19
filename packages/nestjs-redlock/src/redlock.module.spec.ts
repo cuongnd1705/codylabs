@@ -156,7 +156,9 @@ describe('RedisModule Integration forRoot', () => {
       const redlockService = module.get(RedlockService);
       const lock = await redlockService.acquire('test-lock', 1000);
       expect(lock).toBeDefined();
-      if (!lock) throw new Error('Lock acquisition failed');
+      if (!lock) {
+        throw new Error('Lock acquisition failed');
+      }
 
       await lock.release();
     });
@@ -171,7 +173,9 @@ describe('RedisModule Integration forRoot', () => {
       expect(res).toBe('lock acquired');
       const lock = await redlockService.acquire('test-lock', 1000);
       expect(lock).toBeDefined();
-      if (!lock) throw new Error('Lock acquisition failed');
+      if (!lock) {
+        throw new Error('Lock acquisition failed');
+      }
     });
   });
 });

@@ -223,7 +223,9 @@ export class RedlockInstance {
    * Schedules the next auto-extension attempt.
    */
   private scheduleExtension(): void {
-    if (!this.autoExtensionEnabled || this._isReleased) return;
+    if (!this.autoExtensionEnabled || this._isReleased) {
+      return;
+    }
 
     const timeUntilExtension = this.expiresAt.getTime() - Date.now() - this.autoExtensionThresholdMs;
 
@@ -241,7 +243,9 @@ export class RedlockInstance {
    * Performs the actual extension operation in the background.
    */
   private async performExtension(): Promise<void> {
-    if (!this.autoExtensionEnabled || this._isReleased) return;
+    if (!this.autoExtensionEnabled || this._isReleased) {
+      return;
+    }
 
     this.extensionTimer = undefined;
 
@@ -371,7 +375,9 @@ export class Redlock {
     // Process resources
     const keys = processResourceKeys(keyOrKeys);
     this.validateTtl(ttlMs);
-    if (options) this.validateOptions(options);
+    if (options) {
+      this.validateOptions(options);
+    }
 
     const retryDelayMs = options?.retryDelayMs ?? this.retryDelayMs;
     const retryJitterMs = options?.retryJitterMs ?? this.retryJitterMs;
@@ -614,9 +620,14 @@ export class Redlock {
       const maxFailures = total - this.quorum;
 
       const onResult = (success: boolean): void => {
-        if (resolved) return;
-        if (success) successes++;
-        else failures++;
+        if (resolved) {
+          return;
+        }
+        if (success) {
+          successes++;
+        } else {
+          failures++;
+        }
 
         // Quorum achieved — resolve early without waiting for slow nodes
         if (successes >= this.quorum) {

@@ -11,13 +11,17 @@ type StringInterpreter = JsInterpreter<FieldCondition<string>, Record<string, st
 
 const like: StringInterpreter = (condition, object, { get }) => {
   const value = get(object, condition.field);
-  if (typeof value !== 'string') return false;
+  if (typeof value !== 'string') {
+    return false;
+  }
   return likeToRegex(condition.value).test(value);
 };
 
 const ilike: StringInterpreter = (condition, object, { get }) => {
   const value = get(object, condition.field);
-  if (typeof value !== 'string') return false;
+  if (typeof value !== 'string') {
+    return false;
+  }
   return likeToRegex(condition.value, 'i').test(value);
 };
 

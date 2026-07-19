@@ -96,7 +96,9 @@ describe('Redlock Integration Tests', () => {
       const lock1 = await redlock.acquire(key, TEST_TTL);
       expect(lock1).not.toBeNull();
 
-      if (!lock1) throw new Error('Failed to acquire lock');
+      if (!lock1) {
+        throw new Error('Failed to acquire lock');
+      }
 
       // Second client should fail to acquire the same lock
       const lock2 = await redlock.acquire(key, TEST_TTL);
@@ -121,7 +123,9 @@ describe('Redlock Integration Tests', () => {
       const lock = await redlock.acquire(key, 2000);
       expect(lock).not.toBeNull();
 
-      if (!lock) throw new Error('Failed to acquire lock');
+      if (!lock) {
+        throw new Error('Failed to acquire lock');
+      }
 
       // Extend the lock
       const extended = await lock.extend(5000);
@@ -138,7 +142,9 @@ describe('Redlock Integration Tests', () => {
       const lock = await redlock.acquire(key, TEST_TTL);
       expect(lock).not.toBeNull();
 
-      if (!lock) throw new Error('Failed to acquire lock');
+      if (!lock) {
+        throw new Error('Failed to acquire lock');
+      }
 
       // Try to extend with wrong token by creating a fake RedlockInstance
       const fakeToken = 'invalid-token';
@@ -163,7 +169,9 @@ describe('Redlock Integration Tests', () => {
       const lock = await redlock.acquire(key, shortTtl);
       expect(lock).not.toBeNull();
 
-      if (!lock) throw new Error('Failed to acquire lock');
+      if (!lock) {
+        throw new Error('Failed to acquire lock');
+      }
 
       // Wait for lock to expire
       await new Promise((resolve) => setTimeout(resolve, shortTtl + 500));
@@ -439,7 +447,9 @@ describe('Redlock Integration Tests', () => {
       const blockingLock = await redlock.acquire(key, TEST_TTL);
       expect(blockingLock).not.toBeNull();
 
-      if (!blockingLock) throw new Error('Failed to acquire blocking lock');
+      if (!blockingLock) {
+        throw new Error('Failed to acquire blocking lock');
+      }
 
       // Now try withLock - should fail
       await expect(
@@ -568,10 +578,12 @@ describe('Redlock Integration Tests', () => {
       const multiLock = await redlock.acquire(keys, TEST_TTL);
       expect(multiLock).not.toBeNull();
 
-      if (!multiLock) throw new Error('Failed to acquire multi-resource lock');
+      if (!multiLock) {
+        throw new Error('Failed to acquire multi-resource lock');
+      }
 
       // Verify lock properties
-      expect(multiLock.resourceKeys).toEqual(keys.sort());
+      expect(multiLock.resourceKeys).toEqual(keys.toSorted());
       expect(multiLock.isValid).toBe(true);
       expect(multiLock.isReleased).toBe(false);
 
@@ -588,7 +600,9 @@ describe('Redlock Integration Tests', () => {
       const multiLock = await redlock.acquire(keys, TEST_TTL);
       expect(multiLock).not.toBeNull();
 
-      if (!multiLock) throw new Error('Failed to acquire multi-resource lock');
+      if (!multiLock) {
+        throw new Error('Failed to acquire multi-resource lock');
+      }
 
       // Try to acquire individual locks on each resource - all should fail
       for (const key of keys) {
@@ -621,7 +635,9 @@ describe('Redlock Integration Tests', () => {
       const blockingLock = await redlock.acquire(keys[1], TEST_TTL);
       expect(blockingLock).not.toBeNull();
 
-      if (!blockingLock) throw new Error('Failed to acquire blocking lock');
+      if (!blockingLock) {
+        throw new Error('Failed to acquire blocking lock');
+      }
 
       // Try to acquire multi-resource lock - should fail due to partial conflict
       const multiLock = await redlock.acquire(keys, TEST_TTL);
@@ -636,8 +652,12 @@ describe('Redlock Integration Tests', () => {
 
       // Clean up
       await blockingLock.release();
-      if (lock1) await lock1.release();
-      if (lock3) await lock3.release();
+      if (lock1) {
+        await lock1.release();
+      }
+      if (lock3) {
+        await lock3.release();
+      }
 
       // Now the multi-resource lock should succeed
       const finalMultiLock = await redlock.acquire(keys, TEST_TTL);
